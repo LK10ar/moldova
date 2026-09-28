@@ -294,15 +294,14 @@ const OVR={
 };
 const nrm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const GEN=/^(vinaria|winery|chateau|castel|domaine|crama|cave|monastere|musee|parc|lac|grotte|pestera|de|la|le|les|des|du|din|the|and|mai)$/;
-const ovrOf=it=>{const nn=nrm((it.n&&it.n.fr)||it.w||'');for(const k in OVR)if(nn.includes(k))return OVR[k];return null};
+const ovrOf=it=>{if(it.cover)return null;const nn=nrm((it.n&&it.n.fr)||it.w||'');for(const k in OVR)if(nn.includes(k))return OVR[k];return null};
 function nameOk(it,title){
  const T=nrm(title),toks=nrm(((it.n&&it.n.fr)||'')+' '+(it.cat==='g'&&it.sub==='vin'?'':(it.w||''))).split(/[^a-z0-9]+/).filter(t=>t.length>=4&&!GEN.test(t));
  return !toks.length||toks.some(t=>T.includes(t));
 }
 async function cover(it,sz=500){
- const nn=nrm((it.n&&it.n.fr)||it.w||'');
- for(const k in OVR)if(nn.includes(k))return OVR[k];
  if(it.cover)return it.cover;
+ const ov=ovrOf(it);if(ov)return ov;
  it.cvs=it.cvs||{};
  if(it.cvs[sz]!==undefined)return it.cvs[sz];
  const key='md2:'+it.id+':'+sz;
