@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Moldova Explorer — Admin</title>
+<style>
+:root{--bg:#fbf7ef;--fg:#2a2118;--card:#fff;--line:#e6dcc8;--acc:#8c2340}
+@media(prefers-color-scheme:dark){:root{--bg:#14100b;--fg:#f3ead9;--card:#211b13;--line:#3a3022;--acc:#e58aa0}}
+*{box-sizing:border-box}body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+main{max-width:760px;margin:auto}.hide{display:none!important}
+input,select,textarea,button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;margin:4px 0}
+button{width:auto;cursor:pointer;background:var(--acc);color:#fff;border-color:var(--acc)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0}
+.row span{flex:1 1 200px}.row button{padding:6px 12px}
+#pv{max-width:180px;border-radius:8px;display:block;margin:4px 0}#pv:not([src]){display:none}
+#err{color:#c0392b}
+</style></head><body><main>
+<h1>Moldova Explorer — Admin</h1>
+<section id="login">
+<input id="em" type="email" placeholder="Email" autocomplete="username">
+<input id="pw" type="password" placeholder="Mot de passe" autocomplete="current-password">
+<button id="go">Connexion</button> <span id="err"></span>
+</section>
+<section id="app" class="hide">
+<select id="col">
+<option value="circuits">Circuits</option><option value="activities">Activités</option>
+<option value="restaurants">Restaurants / vin</option><option value="heritage">Histoire &amp; culture</option>
+<option value="news">Actualités / événements</option><option value="candidates">Propositions automatiques</option>
+</select>
+<form id="f">
+<input name="slug" placeholder="slug (ex: cricova)" required>
+<select name="status"><option value="draft">Brouillon</option><option value="published">Publié</option></select>
+<input name="cover" type="url" placeholder="URL de l'image (https://…)">
+<img id="pv" alt="">
+<input name="fr" placeholder="Titre FR" required>
+<input name="en" placeholder="Title EN">
+<input name="es" placeholder="Título ES">
+<input name="ro" placeholder="Titlu RO">
+<input name="ru" placeholder="Заголовок RU">
+<textarea name="extra" rows="5" placeholder='JSON optionnel, ex : {"summary":{"fr":"…","en":"…"},"location":{"lat":47.13,"lng":28.86},"wilaya":"transnistrie"}'></textarea>
+<button type="submit">Enregistrer</button> <span id="msg"></span>
+</form>
+<div id="list"></div>
+</section>
+</main>
+<script src="admin.js"></script>
+</body></html>
