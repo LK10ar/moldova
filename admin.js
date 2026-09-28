@@ -16,6 +16,10 @@ $('go').onclick = async () => {
 };
 $('col').onchange = () => { editId = null; $('f').reset(); load(); };
 $('f').cover.oninput = e => $('pv').src = e.target.value;
+// Champ galerie : une URL d'image par ligne
+const gal = document.createElement('textarea'); gal.id = 'gal'; gal.rows = 5;
+gal.placeholder = "Galerie de photos : une URL d'image par ligne (https://…)";
+$('f').extra.before(gal);
 async function load() {
   const c = $('col').value, cand = c === 'candidates';
   $('f').classList.toggle('hide', cand);
@@ -32,7 +36,8 @@ async function load() {
                 b('Rejeter', async () => { await api('candidates/' + x._id + '/reject', { method: 'POST' }); load(); }); }
     else { b('Modifier', () => {
       const f = $('f'); editId = x._id; f.classList.remove('hide');
-      const { _id, __v, createdAt, updatedAt, slug, status, cover, title, ...rest } = x;
+      const { _id, __v, createdAt, updatedAt, slug, status, cover, title, gallery, ...rest } = x;
+      gal.value = (gallery || []).join('\n');
       f.slug.value = slug || ''; f.status.value = status || 'draft'; f.cover.value = cover || '';
       ['fr','en','es','ro','ru'].forEach(l => { if (f[l]) f[l].value = (title && title[l]) || ''; });
       f.extra.value = JSON.stringify(rest);
@@ -47,7 +52,7 @@ $('f').onsubmit = async e => {
   e.preventDefault(); const f = e.target;
   let extra = {}; try { extra = f.extra.value ? JSON.parse(f.extra.value) : {}; } catch { return $('msg').textContent = 'JSON invalide'; }
   const body = { slug: f.slug.value, status: f.status.value, cover: f.cover.value || undefined,
-    title: { fr: f.fr.value, en: f.en.value, es: f.es.value, ro: f.ro ? f.ro.value : '', ru: f.ru ? f.ru.value : '' }, ...extra };
+    title: { fr: f.fr.value, en: f.en.value, es: f.es.value, ro: f.ro ? f.ro.value : '', ru: f.ru ? f.ru.value : '' }, ...extra, gallery: gal.value.split(/\s+/).filter(Boolean) };
   if (editId) { body.cover = f.cover.value; body.title = { ...body.title }; }
   const r = editId ? await api($('col').value + '/' + editId, { method: 'PUT', body: JSON.stringify(body) })
                    : await api($('col').value, { method: 'POST', body: JSON.stringify(body) });
