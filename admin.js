@@ -57,6 +57,7 @@ async function load() {
   if (r.status === 401) { token = ''; sessionStorage.removeItem('md_t'); return show(); }
   const d = await r.json();
   $('list').innerHTML = '';
+  const cnt = document.createElement('p'); cnt.textContent = d.length + ' fiche(s) dans « ' + $('col').selectedOptions[0].textContent + ' »'; $('list').append(cnt);
   d.forEach(x => {
     const row = document.createElement('div'); row.className = 'row';
     const t = document.createElement('span'); t.textContent = cand ? x.name + ' (' + x.source + ')' : ((x.title && x.title.fr) || x.slug) + ' — ' + x.status;
@@ -97,7 +98,7 @@ const imp = document.createElement('button'); imp.type = 'button'; imp.textConte
 imp.onclick = async () => {
   if (!confirm('Copier dans la base toutes les fiches du site (sans doublon ni écrasement) ?')) return;
   imp.disabled = true;
-  try { const r = await api('seed', { method: 'POST' }); const d = await r.json(); $('msg').textContent = r.ok ? d.added + ' fiche(s) importée(s)' : (d.error || 'Erreur ' + r.status); load(); }
+  try { const r = await api('seed', { method: 'POST' }); const d = await r.json(); $('msg').textContent = r.ok ? (d.added ? d.added + ' fiche(s) importée(s)' : 'Rien de nouveau : tout est déjà importé. Change de rubrique dans la liste du haut pour voir le reste.') : (d.error || 'Erreur ' + r.status); load(); }
   catch { $('msg').textContent = 'Serveur injoignable'; }
   imp.disabled = false;
 };
