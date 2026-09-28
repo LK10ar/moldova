@@ -72,13 +72,15 @@ footer a{color:var(--mut)}footer .cr{flex-basis:100%;font-size:12px}
 #mx iframe{width:100%;height:340px;border:0;border-radius:12px;background:var(--line)}
 .lb{position:fixed;inset:0;z-index:90;background:#000e;display:grid;place-items:center;cursor:zoom-out}
 .lb img{max-width:96vw;max-height:92vh;border-radius:6px}
-@media(max-width:820px){
+@media(max-width:1100px){
  .bg{display:block}
  nav{position:fixed;top:0;bottom:0;inset-inline-end:0;width:min(82vw,310px);background:var(--card);flex-direction:column;padding:calc(70px + env(safe-area-inset-top,0px)) 14px 16px;gap:6px;transform:translateX(100%);transition:transform .25s;z-index:30;box-shadow:-8px 0 30px #0008}
  html[dir=rtl] nav{transform:translateX(-100%);box-shadow:8px 0 30px #0008}
  body.nav-open nav{transform:none}
  body.nav-open #scrim{display:block}
  nav button{text-align:start;font-size:18px;padding:13px 12px}
+}
+@media(max-width:820px){
  .sheet{margin:0;border-radius:0;min-height:100%}
  .mb{padding:4px 16px 30px}
  .mh h2{inset-inline:16px}
@@ -88,7 +90,11 @@ footer a{color:var(--mut)}footer .cr{flex-basis:100%;font-size:12px}
 .pin{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px #0007;font-size:16px}
 #bigmap{height:min(72vh,660px);border-radius:14px;border:1px solid var(--line);position:relative;z-index:0}
 nav{min-width:0;overflow-x:auto;scrollbar-width:none}
-@media(max-width:820px){#bigmap{height:68vh}nav{overflow-x:visible}}
+@media(max-width:1100px){nav{overflow-x:visible}}@media(max-width:820px){#bigmap{height:68vh}}
+.logo{white-space:nowrap}
+@media(min-width:1101px) and (max-width:1260px){nav button{padding:7px 8px;font-size:14px}.bar{gap:8px}}
+.pp{width:210px;max-width:100%;border-radius:8px;display:block;margin:0 0 6px}
+.lgd{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 2px 0;font:13px system-ui;color:var(--mut)}.lgd i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:6px;vertical-align:-1px}
 </style></head><body>
 <header><div class="bar">
 <a class="logo" href="./">Moldova Explorer</a>
@@ -109,7 +115,7 @@ const API='https://back-moldova.onrender.com';
 const LG=['fr','en','es','ro','ru'];
 const $=id=>document.getElementById(id);
 const ls={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
-let lang=ls.get('lang');
+let lang=ls.get('md_lang');
 if(!LG.includes(lang)){const n=(navigator.language||'fr').slice(0,2);lang=LG.includes(n)?n:'fr'}
 let tab=0,filt='all',q='',cur=null,mtok=0;
 const CATS=['c','a','g','h','t','e','n','m'];
@@ -126,7 +132,11 @@ for(const k of ['es','ro','ru'])T[k]={...T.en,...T[k]};
 const SUB={
 fr:{centre:"Centre",nord:"Nord",sud:"Sud",gagaouzie:"Gagaouzie",transnistrie:"Transnistrie",vin:"Vin",nature:"Nature",urbain:"Ville",plat:"Plat",dessert:"Dessert",monastere:"Monastère",forteresse:"Forteresse",musee:"Musée",site:"Site",bus:"Bus",velo:"Vélo",pied:"À pied",hotel:"Hôtel",pension:"Pension",habitant:"Chez l'habitant"},
 en:{centre:"Central",nord:"North",sud:"South",gagaouzie:"Gagauzia",transnistrie:"Transnistria",vin:"Wine",nature:"Nature",urbain:"City",plat:"Dish",dessert:"Dessert",monastere:"Monastery",forteresse:"Fortress",musee:"Museum",site:"Site",bus:"Coach",velo:"Bike",pied:"On foot",hotel:"Hotel",pension:"Guesthouse",habitant:"Homestay"}};
-const A=a=>typeof a==='string'?{fr:a,en:a}:{fr:a[0],en:a[1]};
+Object.assign(SUB.fr,{auberge:'Auberge',artisanat:'Artisanat'});Object.assign(SUB.en,{auberge:'Inn',artisanat:'Crafts'});
+SUB.es={centre:"Centro",nord:"Norte",sud:"Sur",gagaouzie:"Gagauzia",transnistrie:"Transnistria",vin:"Vino",nature:"Naturaleza",urbain:"Ciudad",plat:"Plato",dessert:"Postre",monastere:"Monasterio",forteresse:"Fortaleza",musee:"Museo",site:"Sitio",bus:"Autocar",velo:"Bici",pied:"A pie",hotel:"Hotel",pension:"Pensión",habitant:"Casa rural",auberge:"Posada",artisanat:"Artesanía"};
+SUB.ro={centre:"Centru",nord:"Nord",sud:"Sud",gagaouzie:"Găgăuzia",transnistrie:"Transnistria",vin:"Vin",nature:"Natură",urbain:"Oraș",plat:"Fel de mâncare",dessert:"Desert",monastere:"Mănăstire",forteresse:"Cetate",musee:"Muzeu",site:"Sit",bus:"Autocar",velo:"Bicicletă",pied:"Pe jos",hotel:"Hotel",pension:"Pensiune",habitant:"La localnici",auberge:"Han",artisanat:"Meșteșuguri"};
+SUB.ru={centre:"Центр",nord:"Север",sud:"Юг",gagaouzie:"Гагаузия",transnistrie:"Приднестровье",vin:"Вино",nature:"Природа",urbain:"Город",plat:"Блюдо",dessert:"Десерт",monastere:"Монастырь",forteresse:"Крепость",musee:"Музей",site:"Место",bus:"Автобус",velo:"Велосипед",pied:"Пешком",hotel:"Отель",pension:"Пансион",habitant:"У местных жителей",auberge:"Гостиница",artisanat:"Ремёсла"};
+const A=a=>typeof a==='string'?{fr:a,en:a}:a.length>2?{fr:a[0],en:a[1],es:a[2],ro:a[3],ru:a[4]}:{fr:a[0],en:a[1]};
 const ITEMS=[];
 const add=(cat,sub,w,lat,lng,n,d,x={})=>ITEMS.push({id:cat+(ITEMS.filter(i=>i.cat===cat).length+1),cat,sub,w,lat,lng,n:A(n),d:A(d),...x,when:x.when&&A(x.when)});
 
@@ -149,7 +159,7 @@ add('g','plat',"Plăcintă",47.0105,28.8638,"Plăcinte","Galettes fourrées au f
 add('g','plat',"Sarmale",47.0105,28.8638,"Sarmale","Feuilles de chou ou de vigne farcies de viande et de riz.");
 add('g','plat',"Zeamă",47.0105,28.8638,"Zeamă","Soupe de poulet aux nouilles maison et à l'acidité de bortsch.");
 add('g','vin',"Cricova",47.1367,28.8683,"Cricova","Cave souterraine et vins effervescents.",{});
-add('g','vin',"Mileștii Mici",46.8517,28.8286,"Mileștii Mici","Immense cave souterraine à l'sud de Chișinău.",{});
+add('g','vin',"Mileștii Mici",46.8517,28.8286,"Mileștii Mici","Immense cave souterraine à au sud de Chișinău.",{});
 add('g','vin',"Château Vartely",47.3728,28.8231,"Château Vartely","Domaine près d'Orhei, région du Codru.");
 add('g','vin',"Castel Mimi",46.9333,29.0167,"Castel Mimi","Château et cave à Bulboaca, région du Codru.");
 add('g','vin',"Purcari",46.5586,29.9906,["Purcari","Purcari"],["Domaine historique de la région Ștefan Vodă, réputé pour ses rouges (Rară Neagră).","Historic estate in the Ștefan Vodă region, known for its reds (Rară Neagră)."]);
@@ -177,6 +187,75 @@ add('e','',"Ziua Independenței",47.0245,28.8322,["Fête de l'indépendance","In
 // Actualités / bon à savoir
 add('n','',"Moldavie",47.0105,28.8638,["Bon à savoir : Transnistrie","Good to know: Transnistria"],["Le passage se fait à un poste de contrôle : prévoyez votre passeport. Consultez les conseils aux voyageurs de votre pays avant de partir.","Crossing is through a checkpoint: bring your passport. Check your government's travel advice before you go."]);
 
+
+/* ---------- Traductions du catalogue (es · ro · ru) — nom|description|date ---------- */
+const TR={
+c1:["Chișinău y viñedos del Codru|Bodegas subterráneas de Cricova y Mileștii Mici, Orheiul Vechi y el centro de Chișinău.","Chișinău și podgoriile Codrilor|Crame subterane la Cricova și Mileștii Mici, Orheiul Vechi și centrul Chișinăului.","Кишинёв и виноградники Кодр|Подземные погреба Кричовы и Милештий-Мич, Старый Орхей и центр Кишинёва."],
+c2:["Norte: Soroca y Saharna|Fortaleza de Soroca sobre el Dniéster, cascadas y monasterio de Saharna, ciudad de Bălți.","Nord: Soroca și Saharna|Cetatea Soroca pe Nistru, cascadele și mănăstirea Saharna, orașul Bălți.","Север: Сороки и Сахарна|Сорокская крепость на Днестре, водопады и монастырь Сахарна, город Бельцы."],
+c3:["Valul lui Traian y el Prut|Ruta del vino del sur, Cahul, valle del Prut y reserva natural.","Valul lui Traian și Prutul|Drumul vinului din sud, Cahul, valea Prutului și rezervația naturală.","Траянов вал и Прут|Винный маршрут юга, Кагул, долина Прута и заповедник."],
+c4:["Gagauzia|Comrat, capital de la autonomía gagauza: cultura ortodoxa de habla turca, vinos y cocina local.","Găgăuzia|Comrat, capitala autonomiei găgăuze: cultură ortodoxă turcofonă, vinuri și bucătărie locală.","Гагаузия|Комрат, столица гагаузской автономии: православная тюркоязычная культура, вина и местная кухня."],
+c5:["Transnistria en 2 días|Bender, Tiraspol y Chițcani: herencia soviética, fortaleza y monasterio. Lleve el pasaporte para el control.","Transnistria în 2 zile|Bender, Tiraspol și Chițcani: moștenire sovietică, cetate și mănăstire. Ia pașaportul pentru control.","Приднестровье за 2 дня|Бендеры, Тирасполь и Кицканы: советское наследие, крепость и монастырь. Возьмите паспорт для контроля."],
+a1:["Cata en las bodegas de Cricova|Recorrido en tren por kilómetros de galerías calizas y cata de espumosos.","Degustare în cramele Cricova|Coborâre cu trenulețul prin kilometri de galerii de calcar și degustare de vinuri spumante.","Дегустация в погребах Кричовы|Поездка на поезде по километрам известняковых галерей и дегустация игристых вин."],
+a2:["Mileștii Mici: la bodega más grande del mundo|Ciudad subterránea de galerías con millones de botellas, récord Guinness.","Mileștii Mici: cea mai mare cramă din lume|Oraș subteran de galerii cu milioane de sticle, înscris în Guinness.","Милештий-Мич: крупнейший в мире винный погреб|Подземный город галерей с миллионами бутылок, рекорд Гиннесса."],
+a3:["Senderismo en Orheiul Vechi|Acantilados sobre el río Răut, monasterio rupestre y pueblos tradicionales.","Drumeție la Orheiul Vechi|Stânci deasupra Răutului, mănăstire rupestră și sate tradiționale.","Поход по Старому Орхею|Скалы над рекой Реут, пещерный монастырь и традиционные сёла."],
+a4:["Reserva del Prut inferior|Humedal y lago Beleu: observación de aves y paseos por la naturaleza en el sur.","Rezervația Prutul de Jos|Zonă umedă și lacul Beleu: observarea păsărilor și plimbări în natură în sud.","Заповедник «Нижний Прут»|Заболоченные земли и озеро Белеу: наблюдение за птицами и прогулки на юге."],
+a5:["Chișinău a pie|Parque Ștefan cel Mare, catedral de la Natividad, arco del triunfo y mercado central.","Chișinău pe jos|Parcul Ștefan cel Mare, Catedrala Nașterea Domnului, Arcul de Triumf și Piața Centrală.","Кишинёв пешком|Парк Штефана чел Маре, Собор Рождества, Триумфальная арка и Центральный рынок."],
+g1:["|Polenta de maíz con queso, crema agria o carne.","|Mămăligă servită cu brânză, smântână sau carne.","Мамалыга|Кукурузная каша с брынзой, сметаной или мясом."],
+g2:["|Empanadas fritas de queso, patata o col.","|Plăcinte umplute cu brânză, cartofi sau varză, coapte în tigaie.","Плацинды|Лепёшки с сыром, картофелем или капустой, жаренные на сковороде."],
+g3:["|Hojas de col o vid rellenas de carne y arroz.","|Foi de varză sau viță umplute cu carne și orez.","Сармале|Капустные или виноградные листья с мясом и рисом."],
+g4:["|Sopa de pollo con fideos caseros y toque ácido de borsch.","|Supă de pui cu tăiței de casă și acrișor de borș.","Зама|Куриный суп с домашней лапшой и кислинкой борща."],
+g5:["|Bodega subterránea y vinos espumosos.","|Cramă subterană și vinuri spumante.","Кричова|Подземный погреб и игристые вина."],
+g6:["|Inmensa bodega subterránea al sur de Chișinău.","|Imensă cramă subterană la sud de Chișinău.","Милештий-Мич|Огромный подземный погреб к югу от Кишинёва."],
+g7:["|Bodega cerca de Orhei, región del Codru.","|Domeniu lângă Orhei, regiunea Codru.","Шато Вартели|Винодельня у Орхея, регион Кодру."],
+g8:["|Castillo y bodega en Bulboaca, región del Codru.","|Castel și cramă la Bulboaca, regiunea Codru.","Кастел Мими|Замок и винодельня в Булбоаке, регион Кодру."],
+g9:["|Bodega histórica de la región Ștefan Vodă, famosa por sus tintos (Rară Neagră).","|Domeniu istoric din regiunea Ștefan Vodă, cunoscut pentru roșii (Rară Neagră).","Пуркарь|Историческая винодельня региона Штефан-Водэ, известна красными винами (Рара Нягрэ)."],
+g10:["|Bodega de la región Ștefan Vodă, cerca de Căușeni.","|Cramă din regiunea Ștefan Vodă, lângă Căușeni.","Гогу|Винодельня региона Штефан-Водэ, близ Каушан."],
+g11:["|Bodega en Puhoi, cerca de Chișinău.","|Domeniu la Puhoi, aproape de Chișinău.","Аскони|Винодельня в Пухое, недалеко от Кишинёва."],
+g12:["Château Cojușna|Bodega moderna en la región del Codru.","|Cramă modernă în regiunea Codru.","Шато Кожушна|Современная винодельня региона Кодру."],
+g13:["|Famosa destilería de brandy en Transnistria.","|Celebră distilerie de brandy din Transnistria.","Квинт|Знаменитый коньячный завод в Приднестровье."],
+h1:["|Fortaleza redonda del siglo XV sobre el Dniéster, construida bajo Esteban el Grande.","|Cetate rotundă din sec. XV pe Nistru, ridicată sub Ștefan cel Mare.","Сорокская крепость|Круглая крепость XV века на Днестре, построена при Штефане Великом."],
+h2:["|Complejo rupestre y antigua ciudad, uno de los sitios más emblemáticos del país.","|Complex rupestru și cetate veche, unul dintre cele mai emblematice locuri ale țării.","Старый Орхей|Пещерный комплекс и древний город, один из символов страны."],
+h3:["|Uno de los monasterios más antiguos del país, en los bosques del Codru.","|Una dintre cele mai vechi mănăstiri ale țării, în pădurile Codrilor.","Каприяна|Один из древнейших монастырей страны в лесах Кодр."],
+h4:["|Monasterio junto a un lago, conjunto neoclásico del siglo XIX.","|Mănăstire lângă lac, ansamblu neoclasic din sec. XIX.","Курки|Монастырь на берегу озера, неоклассический ансамбль XIX века."],
+h5:["|Monasterio y cascadas a orillas del Dniéster.","|Mănăstire și cascade pe malul Nistrului.","Сахарна|Монастырь и водопады на берегу Днестра."],
+h6:["Museo Nacional de Historia|Colecciones arqueológicas y etnográficas en el corazón de Chișinău.","Muzeul Național de Istorie|Colecții arheologice și etnografice în inima Chișinăului.","Национальный музей истории|Археологические и этнографические коллекции в центре Кишинёва."],
+t1:["Fortaleza de Bender|Fortaleza otomana del siglo XVI a orillas del Dniéster, uno de los grandes sitios de la región.","Cetatea Tighina (Bender)|Cetate otomană din sec. XVI pe malul Nistrului, unul dintre principalele obiective.","Бендерская крепость|Османская крепость XVI века на Днестре, одна из главных достопримечательностей."],
+t2:["|Capital de Transnistria: monumentos y arquitectura soviéticos a orillas del Dniéster.","|Capitala Transnistriei: monumente și arhitectură sovietică pe malul Nistrului.","Тирасполь|Столица Приднестровья: советские памятники и архитектура на берегу Днестра."],
+t3:["|Monasterio ortodoxo a orillas del Dniéster, cerca de Tiraspol.","|Mănăstire ortodoxă pe malul Nistrului, lângă Tiraspol.","Новый Нямец (Кицканы)|Православный монастырь на Днестре близ Тирасполя."],
+t4:["|Destilería de la era soviética, brandis y catas.","|Distilerie înființată în epoca sovietică, brandy și degustări.","Квинт|Завод советских времён: коньяки и дегустации."],
+e1:["Fiesta nacional del vino|Gran festival del vino en el centro de Chișinău, tradicionalmente a principios de octubre. Fechas por confirmar.|Principios de octubre","Ziua Națională a Vinului|Mare festival al vinului în centrul Chișinăului, de obicei la începutul lui octombrie. Date de confirmat.|Început de octombrie","Национальный день вина|Большой винный фестиваль в центре Кишинёва, обычно в начале октября. Даты уточняются.|Начало октября"],
+e2:["Día de la ciudad de Chișinău|Conciertos y animación por la fiesta de la capital, el 14 de octubre.|14 de octubre","Hramul Chișinăului|Concerte și animație de hramul capitalei, pe 14 octombrie.|14 octombrie","День города Кишинёва|Концерты и мероприятия к празднику столицы 14 октября.|14 октября"],
+e3:["|Tradición del 1 de marzo: se regala un hilo rojo y blanco que anuncia la primavera.|1–8 de marzo","|Tradiția de 1 martie: se dăruiește un șnur roșu-alb care vestește primăvara.|1–8 martie","Мэрцишор|Традиция 1 марта: дарят красно-белый шнурок в честь прихода весны.|1–8 марта"],
+e4:["Día de la Independencia|Celebraciones nacionales el 27 de agosto.|27 de agosto","Ziua Independenței|Sărbători naționale pe 27 august.|27 august","День независимости|Национальные торжества 27 августа.|27 августа"],
+n1:["Bueno saber: Transnistria|El paso se hace por un control fronterizo: lleve el pasaporte. Consulte los consejos de viaje de su país antes de salir.","Bine de știut: Transnistria|Trecerea se face printr-un punct de control: ia pașaportul. Consultă recomandările de călătorie ale țării tale înainte de plecare.","Полезно знать: Приднестровье|Переезд проходит через контрольный пост: возьмите паспорт. Перед поездкой изучите рекомендации МИД вашей страны."]
+};
+const EN={g1:"Cornmeal polenta served with cheese, sour cream or meat.",g2:"Pan-fried pies filled with cheese, potato or cabbage.",g3:"Cabbage or vine leaves stuffed with meat and rice.",g4:"Chicken soup with homemade noodles and a sour borscht tang.",g5:"Underground cellar and sparkling wines.",g6:"Huge underground cellar south of Chișinău.",g7:"Estate near Orhei, Codru region.",g8:"Château and cellar in Bulboaca, Codru region.",g10:"Winery in the Ștefan Vodă region, near Căușeni.",g11:"Estate in Puhoi, near Chișinău.",g12:"Modern winery in the Codru region.",g13:"Famous brandy distillery in Transnistria.",h3:"One of the oldest monasteries in the country, in the Codru forests.",h4:"Lakeside monastery, a 19th-century neoclassical ensemble.",h5:"Monastery and waterfalls on the Dniester banks.",t3:"Orthodox monastery on the Dniester, near Tiraspol.",t4:"Distillery founded in the Soviet era, brandies and tastings."};
+
+/* ---------- Routes du vin (carte officielle Wine Routes of Moldova) et sud du pays ---------- */
+const RG={
+ codru:{c:'#5b7a2a',n:{fr:'Codru',en:'Codru',es:'Codru',ro:'Codru',ru:'Кодру'},d:["Cave de la région viticole du Codru, au centre du pays (Routes du vin de Moldavie).","Winery in the Codru wine region, central Moldova (Wine Routes of Moldova).","Bodega de la región vinícola del Codru, en el centro de Moldavia (Rutas del vino).","Cramă din regiunea viticolă Codru, în centrul Moldovei (Drumurile Vinului).","Винодельня региона Кодру в центре Молдовы (Винные маршруты Молдовы)."]},
+ stefan:{c:'#b06a1a',n:{fr:'Ștefan Vodă',en:'Ștefan Vodă',es:'Ștefan Vodă',ro:'Ștefan Vodă',ru:'Штефан-Водэ'},d:["Cave de la région viticole Ștefan Vodă, au sud-est (Routes du vin de Moldavie).","Winery in the Ștefan Vodă wine region, south-east Moldova (Wine Routes of Moldova).","Bodega de la región vinícola Ștefan Vodă, en el sureste (Rutas del vino).","Cramă din regiunea viticolă Ștefan Vodă, în sud-est (Drumurile Vinului).","Винодельня региона Штефан-Водэ на юго-востоке (Винные маршруты Молдовы)."]},
+ traian:{c:'#c0392b',n:{fr:'Valul lui Traian',en:'Valul lui Traian',es:'Valul lui Traian',ro:'Valul lui Traian',ru:'Валул луй Траян'},d:["Cave de la région viticole Valul lui Traian, au sud (Routes du vin de Moldavie).","Winery in the Valul lui Traian wine region, southern Moldova (Wine Routes of Moldova).","Bodega de la región vinícola Valul lui Traian, en el sur (Rutas del vino).","Cramă din regiunea viticolă Valul lui Traian, în sud (Drumurile Vinului).","Винодельня региона Валул луй Траян на юге (Винные маршруты Молдовы)."]}
+};
+[['g5','codru'],['g6','codru'],['g7','codru'],['g8','codru'],['g11','codru'],['g12','codru'],['g13','codru'],['g9','stefan'],['g10','stefan']].forEach(([id,r])=>{const x=ITEMS.find(i=>i.id===id);if(x)x.reg=r});
+[['Barza Albă',47.76,27.93,'Bălți','codru'],['Vinaria Hîncești',46.83,28.59,'Hîncești','codru'],['ATU Winery',47.01,28.85,'Chișinău','codru'],['Crama Tudor',47.26,28.31,'Călărași','codru'],['Et Cetera',46.6,29.9,'Ștefan Vodă','stefan'],['Vinia Traian',45.85,28.2,'Cahul','traian'],['Corbu (Văleni)',45.63,28.23,'Cahul','traian'],['Kara Gani',45.68,28.4,'Vulcănești','traian'],['Tomai Vinex',46.3,28.65,'Comrat','traian'],['Vinaria din Vale',46.28,28.2,'Cantemir','traian'],['Vinuri de Comrat',46.31,28.66,'Comrat','traian'],['Basavin',46.33,28.97,'Basarabeasca','traian']]
+ .forEach(([n,la,ln,w,r])=>add('g','vin',w,la,ln,n,RG[r].d,{reg:r}));
+const ML=[{label:'Moldova.travel — Southern Moldova',url:'https://moldova.travel/en/south-of-moldova/'}];
+const S=(cat,sub,w,la,ln,n,d,x={})=>add(cat,sub,w,la,ln,n,d,{links:ML,...x});
+S('h','musee','Cahul',45.63,28.23,["Musée du Pain de Văleni","Văleni Bread Museum","Museo del Pan de Văleni","Muzeul Pâinii din Văleni","Музей хлеба в Вэлень"],["Histoire et symboles des pains de fête moldaves ; village distingué « Best Tourism Village » par ONU Tourisme.","History and symbolism of Moldovan festive breads; village named a UN Tourism “Best Tourism Village”.","Historia y simbolismo de los panes festivos moldavos; pueblo distinguido «Best Tourism Village» por ONU Turismo.","Istoria și simbolistica pâinilor de sărbătoare; sat distins „Best Tourism Village” de ONU Turism.","История и символика праздничных хлебов; село отмечено ООН-Туризм как «Лучшая туристическая деревня»."]);
+S('h','musee','Comrat',46.31,28.62,["Musée du Tapis vivant (Beșalma)","Living Carpet Museum (Beșalma)","Museo de la Alfombra Viva (Beșalma)","Muzeul Covorului Viu (Beșalma)","Музей живого ковра (Бешалма)"],["Tapis faits main selon une tradition de 150 ans, avec démonstration des étapes de fabrication.","Handmade carpets following a 150-year tradition, with a look at each stage of making them.","Alfombras hechas a mano según una tradición de 150 años y demostración de su elaboración.","Covoare lucrate manual după o tradiție de 150 de ani, cu etapele confecționării.","Ковры ручной работы по 150-летней традиции и показ этапов изготовления."]);
+S('h','musee','Comrat',46.3,28.66,["Musée gagaouze d'histoire et d'ethnographie","Gagauz Museum of History and Ethnography","Museo gagauzo de historia y etnografía","Muzeul găgăuz de istorie și etnografie","Гагаузский музей истории и этнографии"],["Costumes, bijoux et objets du quotidien des paysans gagaouzes du XIXe siècle.","Costumes, jewellery and everyday objects of 19th-century Gagauz peasants.","Trajes, joyas y objetos cotidianos de los campesinos gagauzos del siglo XIX.","Costume, bijuterii și obiecte de uz casnic ale țăranilor găgăuzi din sec. XIX.","Костюмы, украшения и предметы быта гагаузских крестьян XIX века."]);
+S('h','site','Cahul',45.9,28.2,["Église des Vieux-croyants de Cahul","Old Believers' Church, Cahul","Iglesia de los Viejos Creyentes de Cahul","Biserica lipovenilor din Cahul","Церковь старообрядцев в Кагуле"],["Église en brique rouge des Lipovènes, rénovée en 1913, fermée en 1963, restaurée en 1994.","Red-brick Lipovan church, renovated in 1913, closed in 1963 and restored by 1994.","Iglesia lipovana de ladrillo rojo, renovada en 1913, cerrada en 1963 y restaurada en 1994.","Biserică lipovenească din cărămidă roșie, renovată în 1913, închisă în 1963, restaurată în 1994.","Красная кирпичная церковь липован: обновлена в 1913, закрыта в 1963, восстановлена к 1994."]);
+S('h','musee','Slobozia Mare',45.55,28.2,["Musée d'histoire de Slobozia Mare","Slobozia Mare History Museum","Museo de historia de Slobozia Mare","Muzeul de istorie din Slobozia Mare","Исторический музей Слобозия-Маре"],["Petit musée de 11 000 objets, avec une salle dédiée à la mémoire des déportations.","Small museum with 11,000 items and a room devoted to the memory of deportations.","Pequeño museo con 11 000 piezas y una sala dedicada a la memoria de las deportaciones.","Muzeu mic cu 11 000 de exponate și o sală dedicată memoriei deportărilor.","Небольшой музей с 11 000 экспонатов и залом памяти о депортациях."]);
+S('h','musee','Căușeni',46.6,29.38,["Maison-musée Alexei Mateevici (Zaim)","Alexei Mateevici House-Museum (Zaim)","Casa-museo Alexei Mateevici (Zaim)","Casa-muzeu Alexei Mateevici (Zaim)","Дом-музей Алексея Матеевича (Заим)"],["Maison du poète : six salles, plus de 7 000 objets et la « Table du silence ».","The poet's house: six rooms, over 7,000 items and the “Table of Silence”.","Casa del poeta: seis salas, más de 7000 objetos y la «Mesa del silencio».","Casa poetului: șase săli, peste 7000 de obiecte și „Masa tăcerii”.","Дом поэта: шесть залов, более 7000 предметов и «Стол молчания»."]);
+S('a','nature','Cahul',45.66,28.3,["Colinele de Aur (Collines d'or)","Colinele de Aur (Golden Hills)","Colinele de Aur (Colinas Doradas)","Colinele de Aur (Dealurile de Aur)","Колине де Аур («Золотые холмы»)"],["Collines d'argile jaune-rouge près de Văleni, où l'on a trouvé des restes de mastodontes ; vue sur le lac Beleu.","Yellow-red clay hills near Văleni where mastodon remains were found; views over Lake Beleu.","Colinas de arcilla amarillo-rojiza cerca de Văleni, con restos de mastodontes y vistas al lago Beleu.","Dealuri de argilă galben-roșiatică lângă Văleni, cu resturi de mastodonți și priveliște spre lacul Beleu.","Холмы жёлто-красной глины близ Вэлень, где нашли останки мастодонтов; вид на озеро Белеу."]);
+S('a','velo','Ștefan Vodă',46.51,29.66,["Vélo : Chișinău–Palanca (226 km)","Cycling: Chișinău–Palanca (226 km)","Ciclismo: Chișinău–Palanca (226 km)","Bicicletă: Chișinău–Palanca (226 km)","Велопоход: Кишинёв–Паланка (226 км)"],["Itinéraire de 226 km en 6 segments à travers les régions du Codru et de Ștefan Vodă.","A 226 km route in 6 segments through the Codru and Ștefan Vodă regions.","Ruta de 226 km en 6 tramos por las regiones del Codru y Ștefan Vodă.","Traseu de 226 km în 6 segmente prin regiunile Codru și Ștefan Vodă.","Маршрут 226 км из 6 участков через регионы Кодру и Штефан-Водэ."]);
+S('e','','Comrat',46.3,28.65,["Hederlez (Comrat)","Hederlez (Comrat)","Hederlez (Comrat)","Hederlez (Comrat)","Хедерлез (Комрат)"],["Fête gagaouze du printemps : courses de chevaux et danse collective Horo. Dates à confirmer.","Gagauz spring festival: horse races and the communal Horo dance. Dates to be confirmed.","Fiesta gagauza de primavera: carreras de caballos y danza colectiva Horo. Fechas por confirmar.","Sărbătoarea găgăuză a primăverii: curse de cai și dansul Horo. Date de confirmat.","Гагаузский весенний праздник: скачки и общий танец хоро. Даты уточняются."],{when:["Mai","May","Mayo","Mai","Май"]});
+S('e','','Purcari',46.5586,29.9906,["Purcari Wine Run","Purcari Wine Run","Purcari Wine Run","Purcari Wine Run","Purcari Wine Run"],["Course à pied dans les vignes de Purcari. Dates à confirmer.","Trail run through the Purcari vineyards. Dates to be confirmed.","Carrera a pie entre los viñedos de Purcari. Fechas por confirmar.","Cursă prin podgoriile Purcari. Date de confirmat.","Забег по виноградникам Пуркарь. Даты уточняются."],{when:["Septembre","September","Septiembre","Septembrie","Сентябрь"]});
+S('e','','Comrat',46.3,28.65,["Gagauz Șarap Yortusu","Gagauz Șarap Yortusu","Gagauz Șarap Yortusu","Gagauz Șarap Yortusu","Гагауз Шарап Йортусу"],["Fête du vin gagaouze à Comrat. Dates à confirmer.","Gagauz wine festival in Comrat. Dates to be confirmed.","Fiesta del vino gagauza en Comrat. Fechas por confirmar.","Sărbătoarea vinului găgăuz la Comrat. Date de confirmat.","Гагаузский праздник вина в Комрате. Даты уточняются."],{when:["Début novembre","Early November","Principios de noviembre","Început de noiembrie","Начало ноября"]});
+['c3','c4'].forEach(id=>{const x=ITEMS.find(i=>i.id===id);if(x)x.links=ML});
+ITEMS.forEach(i=>{const r=TR[i.id];if(r)['es','ro','ru'].forEach((l,k)=>{const [n,d,w]=(r[k]||'').split('|');if(n)i.n[l]=n;if(d)i.d[l]=d;if(w&&i.when)i.when[l]=w});if(EN[i.id])i.d.en=EN[i.id]});
+
 /* ---------- Utilitaires ---------- */
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -190,7 +269,7 @@ const BAD=/flag|drapeau|logo|icon|map|carte|blason|armoiries|locator|wikidata|sy
 
 /* ---------- Wikipédia (photos, histoire, coordonnées) ---------- */
 const wapi=async(h,p)=>{
- const u=new URL(`https://${h}.wikipedia.org/w/api.php`);
+ const u=new URL(h==='commons'?'https://commons.wikimedia.org/w/api.php':`https://${h}.wikipedia.org/w/api.php`);
  Object.entries({action:'query',format:'json',origin:'*',redirects:1,...p}).forEach(([k,v])=>u.searchParams.set(k,v));
  const r=await fetch(u);if(!r.ok)throw new Error('http');
  const j=await r.json();return Object.values((j.query&&j.query.pages)||{});
@@ -199,13 +278,13 @@ async function cover(it,sz=500){
  if(it.cover)return it.cover;
  it.cvs=it.cvs||{};
  if(it.cvs[sz]!==undefined)return it.cvs[sz];
- const key='dz2:'+it.id+':'+sz;
+ const key='md1:'+it.id+':'+sz;
  try{const c=JSON.parse(ls.get(key)||'null');if(c&&Date.now()-c.t<6048e5)return it.cvs[sz]=c.u}catch{}
  let u=null,ok=false;
  try{
   const ps=(await wapi('fr',{generator:'search',gsrsearch:it.w||tx(it.n,'fr'),gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz})).sort((a,b)=>a.index-b.index);
-  const p=ps.find(p=>p.thumbnail);u=p?p.thumbnail.source:null;ok=true;
-   if(!u){const p2=(await wapi('fr',{generator:'search',gsrsearch:tx(it.n,'fr')+' Moldavie',gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz})).sort((a,b)=>a.index-b.index).find(p=>p.thumbnail);u=p2?p2.thumbnail.source:null}
+  const p=ps.find(p=>p.thumbnail&&!BAD.test(p.title+' '+p.thumbnail.source));u=p?p.thumbnail.source:null;ok=true;
+   if(!u){const p2=(await wapi('fr',{generator:'search',gsrsearch:tx(it.n,'fr')+' Moldavie',gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz}))  .sort((a,b)=>a.index-b.index).find(p=>p.thumbnail&&!BAD.test(p.title+' '+p.thumbnail.source));u=p2?p2.thumbnail.source:null}
  }catch{}
  it.cvs[sz]=u;
  if(ok)ls.set(key,JSON.stringify({u,t:Date.now()}));
@@ -222,10 +301,15 @@ async function detail(it,lg){
  const ll=m.langlinks&&m.langlinks[0];
  const jobs=[];
  if(lg!=='fr'&&ll)jobs.push(wapi(lg,{titles:ll['*'],prop:'extracts',exintro:1,explaintext:1}).then(a=>{const x=a[0];if(x&&x.extract){r.text=x.extract;r.title=x.title;r.wl=lg}}).catch(()=>{}));
+ const kw=norm((it.w||tx(it.n,'fr')).split(/[ ,(]/)[0]);
+ jobs.push(wapi('commons',{generator:'search',gsrnamespace:6,gsrsearch:(it.w||tx(it.n,'fr'))+' Moldova',gsrlimit:30,prop:'imageinfo',iiprop:'url|mime',iiurlwidth:960}).then(a=>{
+   r.cg=a.filter(x=>{const i=x.imageinfo&&x.imageinfo[0];return i&&/jpeg/.test(i.mime)&&i.thumburl&&!BAD.test(x.title)&&(kw.length<4||norm(x.title).includes(kw))}).map(x=>x.imageinfo[0].thumburl).slice(0,16);
+ }).catch(()=>{}));
  jobs.push(wapi('fr',{generator:'images',titles:m.title,gimlimit:50,prop:'imageinfo',iiprop:'url|mime',iiurlwidth:960}).then(a=>{
   r.gal=a.filter(x=>{const i=x.imageinfo&&x.imageinfo[0];return i&&/jpeg/.test(i.mime)&&i.thumburl&&!BAD.test(x.title)}).map(x=>x.imageinfo[0].thumburl).slice(0,12);
  }).catch(()=>{}));
  await Promise.all(jobs);
+ r.gal=[...new Set([...(r.gal||[]),...(r.cg||[])])];
  return r;
 }
 
@@ -259,8 +343,8 @@ function render(){
  $('lang').value=lang;$('h1').textContent=t.h1;$('sub').textContent=t.sub;
  $('bg').setAttribute('aria-label',t.menu);$('top').setAttribute('aria-label',t.top);document.querySelector('.x').setAttribute('aria-label',t.close);
  $('nav').innerHTML=t.nav.map((n,i)=>`<button class="${i===tab?'on':''}" data-tab="${i}">${esc(n)}</button>`).join('');
- const ids=['mentions','cgu','cgv','confidentialite','securite'];
- $('foot').innerHTML=t.legal.map((l,i)=>`<a href="legal.html#${ids[i]}">${esc(l)}</a>`).join('')+`<span>© Moldova Explorer</span>`;
+ const ids=['mentions','cgu','confidentialite','securite'];
+ $('foot').innerHTML=t.legal.filter((_,i)=>i!==2).map((l,i)=>`<a href="legal.html#${ids[i]}">${esc(l)}</a>`).join('')+`<span>© Moldova Explorer</span>`;
  const cat=CATS[tab];let chips='';
  if(cat==='m'){$('view').innerHTML=mapHtml();initMap();return}
  if(cat!=='n'&&cat!=='e'){
@@ -333,7 +417,7 @@ function openM(it,push=true){
  if(it.cover)setHero(it.cover);else if(it.cvs&&it.cvs[500])setHero(it.cvs[500]);
  const gal=[...(it.gallery||[])];
  const showGal=g=>{
-  const all=[...new Set(g)].slice(0,14);
+  const all=[...new Set(g)].slice(0,24);
   if(!all.length||tok!==mtok)return;
   $('gs').hidden=false;$('gx').innerHTML=all.map(u=>`<img src="${esc(u)}" loading="lazy" alt="${esc(nameOf(it))}">`).join('');
  };
@@ -386,7 +470,12 @@ const vidHtml=it=>{let h='';(it.videos||[]).filter(okU).forEach(u=>{let m;
  return h?`<section><h3>${esc((VT[lang]||VT.en))}</h3>${h}</section>`:''};
 const linkHtml=it=>{const l=(it.links||[]).filter(x=>x&&okU(x.url));return l.length?`<section><h3>${esc((LT[lang]||LT.en))}</h3>${l.map(x=>`<p><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label||x.url)}</a></p>`).join('')}</section>`:''};
 const SE={fr:['Départ','Arrivée','Tracé indicatif'],en:['Start','Finish','Indicative route'],es:['Salida','Llegada','Trazado indicativo'],ar:['البداية','النهاية','مسار تقريبي']};
-let LP;const loadL=()=>LP||(LP=new Promise((ok,ko)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.append(c);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=ok;sc.onerror=ko;document.head.append(sc)}));
+Object.assign(ASK,{ro:'Nu ai găsit? Caută automat «{q}»',ru:'Не нашли? Автопоиск «{q}»'});
+Object.assign(ASKM,{ro:['Se caută…','Adăugat: ','Nimic găsit.','Serviciu indisponibil, reîncearcă.'],ru:['Поиск…','Добавлено: ','Ничего не найдено.','Сервис недоступен, повторите.']});
+Object.assign(VT,{ro:'Videoclipuri',ru:'Видео'});Object.assign(LT,{ro:'Linkuri utile',ru:'Полезные ссылки'});
+Object.assign(SE,{ro:['Start','Sosire','Traseu orientativ'],ru:['Старт','Финиш','Ориентировочный маршрут']});
+const WL={fr:'Régions viticoles',en:'Wine regions',es:'Regiones vinícolas',ro:'Regiuni viticole',ru:'Винодельческие регионы'};
+let LP;const loadL=()=>LP||(LP=new Promise((ok,ko)=>{const B='https://cdnjs.cloudflare.com/ajax/libs/';const css=h=>{const c=document.createElement('link');c.rel='stylesheet';c.href=B+h;document.head.append(c)};const js=(s,f,e)=>{const x=document.createElement('script');x.src=B+s;x.onload=f;x.onerror=e;document.head.append(x)};css('leaflet/1.9.4/leaflet.min.css');css('leaflet.markercluster/1.5.3/MarkerCluster.css');css('leaflet.markercluster/1.5.3/MarkerCluster.Default.css');js('leaflet/1.9.4/leaflet.min.js',()=>js('leaflet.markercluster/1.5.3/leaflet.markercluster.js',ok,ok),ko)}));
 async function routeMap(pts,el,tok){
  el.innerHTML='<div style="height:340px;border-radius:12px"></div>';
  try{await loadL();if(tok!==mtok)return;const L=window.L,m=L.map(el.firstChild,{scrollWheelZoom:false});
@@ -399,7 +488,7 @@ async function routeMap(pts,el,tok){
 const MT={fr:['Carte interactive','Carte des routes du vin (PDF)','Voir la fiche'],en:['Interactive map','Wine routes map (PDF)','View details'],es:['Mapa interactivo','Mapa de rutas del vino (PDF)','Ver ficha'],ro:['Hartă interactivă','Harta drumurilor vinului (PDF)','Vezi fișa'],ru:['Интерактивная карта','Карта винных маршрутов (PDF)','Подробнее']};
 const MC={c:'#2f5d3a',a:'#c0562b',g:'#8c2340',h:'#8a5a00',t:'#1d4f9c',e:'#6b3fa0'};
 let BM,BL={};
-const mapHtml=()=>{const m=MT[lang]||MT.en,t=T[lang];return `<div class="tools"><div class="filters">${['c','a','g','h','t','e'].map(k=>`<button class="chip on" data-mf="${k}">${ICO[k]} ${esc(t.nav[CATS.indexOf(k)])}</button>`).join('')}</div><a class="chip on" href="Map-Wine-Routes-of-Moldova-2023-1.pdf" target="_blank" rel="noopener">📄 ${esc(m[1])}</a></div><div id="bigmap" role="region" aria-label="${esc(m[0])}"></div>`};
+const mapHtml=()=>{const m=MT[lang]||MT.en,t=T[lang];return `<div class="tools"><div class="filters">${['c','a','g','h','t','e'].map(k=>`<button class="chip on" data-mf="${k}">${ICO[k]} ${esc(t.nav[CATS.indexOf(k)])}</button>`).join('')}</div><a class="chip on" href="Map-Wine-Routes-of-Moldova-2023-1.pdf" target="_blank" rel="noopener">📄 ${esc(m[1])}</a></div><div id="bigmap" role="region" aria-label="${esc(m[0])}"></div><div class="lgd"><b>${esc(WL[lang]||WL.en)} :</b>${Object.values(RG).map(r=>`<span><i style="background:${r.c}"></i>${esc(tx(r.n))}</span>`).join('')}</div>`};
 async function initMap(){
  const el=$('bigmap'),m=MT[lang]||MT.en;
  try{await loadL()}catch{el.textContent='—';return}
@@ -407,10 +496,11 @@ async function initMap(){
  BM=L.map(el).setView([47.2,28.6],7);
  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenStreetMap'}).addTo(BM);
  ITEMS.filter(i=>i.lat!=null&&i.lng!=null&&MC[i.cat]).forEach(i=>{
-  const c=i.sub==='vin'?'#8c2340':MC[i.cat];
+  const c=RG[i.reg]?RG[i.reg].c:i.sub==='vin'?'#8c2340':MC[i.cat];
   const mk=L.marker([i.lat,i.lng],{icon:L.divIcon({className:'',html:`<div class="pin" style="background:${c}">${i.sub==='vin'?'🍷':ICO[i.cat]}</div>`,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-14]})});
-  mk.bindPopup(`<b>${esc(nameOf(i))}</b><br>${esc(cut(descOf(i),110))}<br><a href="#" data-open="${esc(i.id)}">${esc(m[2])} →</a>`);
-  (BL[i.cat]=BL[i.cat]||L.layerGroup()).addLayer(mk);
+  mk.on('popupopen',e=>{const im=e.popup.getElement().querySelector('.pp');cover(i,300).then(u=>{if(u&&im){im.src=u;im.hidden=false}})});
+   mk.bindPopup(`<img class="pp" alt="" hidden><b>${esc(nameOf(i))}</b><br>${esc(cut(descOf(i),110))}<br><a href="#" data-open="${esc(i.id)}">${esc(m[2])} →</a>`);
+  (BL[i.cat]=BL[i.cat]||(L.markerClusterGroup?L.markerClusterGroup({maxClusterRadius:38}):L.layerGroup())).addLayer(mk);
  });
  Object.values(BL).forEach(g=>g.addTo(BM));
 }
@@ -440,12 +530,12 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('card')){const it=byId(e.target.dataset.id);if(it)openM(it)}
 });
 window.addEventListener('popstate',()=>{if(!$('modal').hidden){$('modal').hidden=true;mtok++;document.body.classList.remove('lock')}});
-$('lang').onchange=e=>{lang=e.target.value;ls.set('lang',lang);render();if(!$('modal').hidden&&cur)openM(cur,false)};
+$('lang').onchange=e=>{lang=e.target.value;ls.set('md_lang',lang);render();if(!$('modal').hidden&&cur)openM(cur,false)};
 $('bg').onclick=()=>{const o=document.body.classList.toggle('nav-open');$('bg').textContent=o?'✕':'☰';$('bg').setAttribute('aria-expanded',o)};
 $('scrim').onclick=closeNav;
 $('top').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 window.addEventListener('scroll',()=>$('top').classList.toggle('show',window.scrollY>500),{passive:true});
-window.addEventListener('resize',()=>{if(innerWidth>820)closeNav()});
+window.addEventListener('resize',()=>{if(innerWidth>1100)closeNav()});
 
 render();
 cover({id:'hero',w:"Orheiul Vechi",n:{fr:'Orheiul Vechi'}},1920).then(u=>{if(u)document.querySelector('.hero').style.setProperty('--hero',`url("${u}")`)});

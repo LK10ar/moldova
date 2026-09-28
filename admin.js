@@ -1,13 +1,17 @@
 const API = 'https://back-moldova.onrender.com'; // URL de l'API Render, sans / final
 const $ = id => document.getElementById(id);
-let token = sessionStorage.getItem('t') || '';
+let token = sessionStorage.getItem('md_t') || '';
 const api = (p, o = {}) => fetch(API + '/api/admin/' + p, { ...o, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } });
 const show = () => { $('login').classList.toggle('hide', !!token); $('app').classList.toggle('hide', !token); if (token) load(); };
 $('go').onclick = async () => {
-  const r = await fetch(API + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: $('em').value, password: $('pw').value }) });
-  if (!r.ok) return $('err').textContent = 'Identifiants incorrects';
-  token = (await r.json()).token; sessionStorage.setItem('t', token); show();
+  $('err').textContent = '';
+  try {
+    const r = await fetch(API + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $('em').value.trim(), password: $('pw').value }) });
+    if (r.status === 429) return $('err').textContent = 'Trop de tentatives, réessaie dans 15 min';
+    if (!r.ok) return $('err').textContent = 'Identifiants incorrects';
+    token = (await r.json()).token; sessionStorage.setItem('md_t', token); show();
+  } catch { $('err').textContent = 'Serveur injoignable (il se réveille peut-être, réessaie dans 30 s) ou CORS refusé'; }
 };
 $('col').onchange = load;
 $('f').cover.oninput = e => $('pv').src = e.target.value;
@@ -15,7 +19,7 @@ async function load() {
   const c = $('col').value, cand = c === 'candidates';
   $('f').classList.toggle('hide', cand);
   const r = await api(c);
-  if (r.status === 401) { token = ''; sessionStorage.removeItem('t'); return show(); }
+  if (r.status === 401) { token = ''; sessionStorage.removeItem('md_t'); return show(); }
   const d = await r.json();
   $('list').innerHTML = '';
   d.forEach(x => {
