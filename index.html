@@ -12,10 +12,10 @@ body.lock,body.nav-open{overflow:hidden}
 button,select,input{font:inherit;color:inherit}
 [hidden]{display:none!important}
 header{position:sticky;top:0;z-index:25;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
-.bar{max-width:1180px;margin:auto;display:flex;align-items:center;gap:12px;padding:10px 16px}
-.logo{font-weight:700;font-size:24px;color:var(--acc);text-decoration:none;margin-inline-end:auto}
-nav{display:flex;gap:4px}
-nav button{background:none;border:1px solid transparent;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:15px;white-space:nowrap}
+.bar{max-width:1190px;margin:auto;display:flex;align-items:center;gap:8px;padding:10px 16px}
+.logo{font-weight:700;font-size:22px;color:var(--acc);text-decoration:none;margin-inline-end:auto}
+nav{display:flex;gap:2px}
+nav button{background:none;border:1px solid transparent;border-radius:8px;padding:7px 9px;cursor:pointer;font-size:14px;white-space:nowrap}
 nav button:hover{background:var(--line)}
 nav button.on{border-color:var(--acc);color:var(--acc)}
 select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer}
@@ -89,7 +89,7 @@ footer a{color:var(--mut)}footer .cr{flex-basis:100%;font-size:12px}
 }
 .pin{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px #0007;font-size:16px}
 #bigmap{height:min(72vh,660px);border-radius:14px;border:1px solid var(--line);position:relative;z-index:0}
-nav{min-width:0;overflow-x:auto;scrollbar-width:none}
+nav{min-width:0;margin-inline-start:auto}
 @media(max-width:1360px){nav{overflow-x:visible}}@media(max-width:820px){#bigmap{height:68vh}}
 .logo{white-space:nowrap}
 
@@ -275,7 +275,7 @@ const lab=k=>(SUB[lang]&&SUB[lang][k])||SUB.en[k]||k;
 const byId=id=>ITEMS.find(i=>i.id===id);
 const fmtDate=d=>{try{return d?new Date(d).toLocaleDateString(lang):''}catch{return''}};
 const cut=(s,n)=>{if(s.length<=n)return s;const i=s.lastIndexOf('. ',n);return s.slice(0,i>250?i+1:n)+(i>250?'':'…')};
-const BAD=/flag|drapeau|logo|icon|map|carte|blason|armoiries|locator|wikidata|symbol|pictogram|plan|schéma|diagram|portrait|signature|coat|emblem|escudo|wappen|stemma|seal|sceau|fotbal|football|fc[ _]|\.svg|\.gif|\.tif/i;
+const BAD=/flag|drapeau|logo|icon|map|carte|blason|armoiries|locator|wikidata|symbol|pictogram|plan|schéma|diagram|portrait|signature|coat|emblem|escudo|wappen|stemma|seal|sceau|fotbal|football|fc[ _]|\.svg|\.gif|\.tif|stema|gerb|герб|steag|herb|armes|shield|banner|bandera|vlag|location|region|map_|mapa/i;
 
 /* ---------- Wikipédia (photos, histoire, coordonnées) ---------- */
 const wapi=async(h,p)=>{
@@ -284,17 +284,33 @@ const wapi=async(h,p)=>{
  const r=await fetch(u);if(!r.ok)throw new Error('http');
  const j=await r.json();return Object.values((j.query&&j.query.pages)||{});
 };
+/* Photos choisies à la main : clé = morceau du nom (sans accents, minuscules) */
+const OVR={
+ 'kara gani':'https://wineofmoldova.com/wp-content/uploads/2020/12/gallery-image-1-kara-gani.jpg',
+ 'racovi':'https://moldovalive.md/wp-content/uploads/2023/05/pestera_emil_racovita-1.jpg',
+ 'japca':'https://img1.advisor.travel/263x225px-Japca_Monastery_17.jpg',
+ 'serpeni':'https://voyages-moldavie.com/wp-content/uploads/2019/06/Memorial-de-Serpeni-1280x674.jpg',
+ 'criva':'https://www.heymoldova.com/fileadmin/archivio/heymoldova/luoghi_tradizioni_cultura/Criva_-12-_agosto_2018_01.jpg'
+};
+const nrm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const GEN=/^(vinaria|winery|chateau|castel|domaine|crama|cave|monastere|musee|parc|lac|grotte|pestera|de|la|le|les|des|du|din|the|and|mai)$/;
+function nameOk(it,title){
+ const T=nrm(title),toks=nrm(((it.n&&it.n.fr)||'')+' '+(it.w||'')).split(/[^a-z0-9]+/).filter(t=>t.length>=4&&!GEN.test(t));
+ return !toks.length||toks.some(t=>T.includes(t));
+}
 async function cover(it,sz=500){
+ const nn=nrm((it.n&&it.n.fr)||it.w||'');
+ for(const k in OVR)if(nn.includes(k))return OVR[k];
  if(it.cover)return it.cover;
  it.cvs=it.cvs||{};
  if(it.cvs[sz]!==undefined)return it.cvs[sz];
- const key='md1:'+it.id+':'+sz;
+ const key='md2:'+it.id+':'+sz;
  try{const c=JSON.parse(ls.get(key)||'null');if(c&&Date.now()-c.t<6048e5)return it.cvs[sz]=c.u}catch{}
  let u=null,ok=false;
  try{
   const ps=(await wapi('fr',{generator:'search',gsrsearch:it.w||tx(it.n,'fr'),gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz})).sort((a,b)=>a.index-b.index);
-  const p=ps.find(p=>p.thumbnail&&!BAD.test(p.title+' '+p.thumbnail.source));u=p?p.thumbnail.source:null;ok=true;
-   if(!u){const p2=(await wapi('fr',{generator:'search',gsrsearch:tx(it.n,'fr')+' Moldavie',gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz}))  .sort((a,b)=>a.index-b.index).find(p=>p.thumbnail&&!BAD.test(p.title+' '+p.thumbnail.source));u=p2?p2.thumbnail.source:null}
+  const p=ps.find(p=>p.thumbnail&&!BAD.test(p.title+' '+p.thumbnail.source)&&nameOk(it,p.title));u=p?p.thumbnail.source:null;ok=true;
+   if(!u){const p2=(await wapi('fr',{generator:'search',gsrsearch:tx(it.n,'fr')+' Moldavie',gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz}))  .sort((a,b)=>a.index-b.index).find(p=>p.thumbnail&&!BAD.test(p.title+' '+p.thumbnail.source)&&nameOk(it,p.title));u=p2?p2.thumbnail.source:null}
  }catch{}
  it.cvs[sz]=u;
  if(ok)ls.set(key,JSON.stringify({u,t:Date.now()}));

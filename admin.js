@@ -1,6 +1,7 @@
 const API = 'https://back-moldova.onrender.com'; // URL de l'API Render, sans / final
 const $ = id => document.getElementById(id);
 let token = sessionStorage.getItem('md_t') || '';
+let editId = null;
 const api = (p, o = {}) => fetch(API + '/api/admin/' + p, { ...o, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } });
 const show = () => { $('login').classList.toggle('hide', !!token); $('app').classList.toggle('hide', !token); if (token) load(); };
 $('go').onclick = async () => {
@@ -13,7 +14,7 @@ $('go').onclick = async () => {
     token = (await r.json()).token; sessionStorage.setItem('md_t', token); show();
   } catch { $('err').textContent = 'Serveur injoignable (il se réveille peut-être, réessaie dans 30 s) ou CORS refusé'; }
 };
-$('col').onchange = load;
+$('col').onchange = () => { editId = null; $('f').reset(); load(); };
 $('f').cover.oninput = e => $('pv').src = e.target.value;
 async function load() {
   const c = $('col').value, cand = c === 'candidates';
@@ -29,7 +30,16 @@ async function load() {
     const b = (label, fn) => { const e = document.createElement('button'); e.textContent = label; e.onclick = fn; row.append(e); };
     if (cand) { b('Valider', async () => { await api('candidates/' + x._id + '/approve', { method: 'POST' }); load(); });
                 b('Rejeter', async () => { await api('candidates/' + x._id + '/reject', { method: 'POST' }); load(); }); }
-    else b('Supprimer', async () => { if (confirm('Supprimer ?')) { await api(c + '/' + x._id, { method: 'DELETE' }); load(); } });
+    else { b('Modifier', () => {
+      const f = $('f'); editId = x._id; f.classList.remove('hide');
+      const { _id, __v, createdAt, updatedAt, slug, status, cover, title, ...rest } = x;
+      f.slug.value = slug || ''; f.status.value = status || 'draft'; f.cover.value = cover || '';
+      ['fr','en','es','ro','ru'].forEach(l => { if (f[l]) f[l].value = (title && title[l]) || ''; });
+      f.extra.value = JSON.stringify(rest);
+      $('pv').src = cover || ''; $('msg').textContent = 'Modification de : ' + slug + ' (Enregistrer pour valider)';
+      f.scrollIntoView({ behavior: 'smooth' });
+    });
+    b('Supprimer', async () => { if (confirm('Supprimer ?')) { await api(c + '/' + x._id, { method: 'DELETE' }); load(); } }); }
     $('list').append(row);
   });
 }
@@ -38,8 +48,10 @@ $('f').onsubmit = async e => {
   let extra = {}; try { extra = f.extra.value ? JSON.parse(f.extra.value) : {}; } catch { return $('msg').textContent = 'JSON invalide'; }
   const body = { slug: f.slug.value, status: f.status.value, cover: f.cover.value || undefined,
     title: { fr: f.fr.value, en: f.en.value, es: f.es.value, ro: f.ro ? f.ro.value : '', ru: f.ru ? f.ru.value : '' }, ...extra };
-  const r = await api($('col').value, { method: 'POST', body: JSON.stringify(body) });
-  $('msg').textContent = r.ok ? 'Enregistré' : (await r.json()).error;
-  if (r.ok) { f.reset(); $('pv').removeAttribute('src'); load(); }
+  if (editId) { body.cover = f.cover.value; body.title = { ...body.title }; }
+  const r = editId ? await api($('col').value + '/' + editId, { method: 'PUT', body: JSON.stringify(body) })
+                   : await api($('col').value, { method: 'POST', body: JSON.stringify(body) });
+  if (r.ok) { $('msg').textContent = 'Enregistré'; editId = null; f.reset(); $('pv').removeAttribute('src'); load(); }
+  else { let m = 'Erreur ' + r.status; try { m = (await r.json()).error || m; } catch {} $('msg').textContent = m; }
 };
 show();
