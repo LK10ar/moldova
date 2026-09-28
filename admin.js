@@ -20,6 +20,11 @@ $('f').cover.oninput = e => $('pv').src = e.target.value;
 const gal = document.createElement('textarea'); gal.id = 'gal'; gal.rows = 5;
 gal.placeholder = "Galerie de photos : une URL d'image par ligne (https://…)";
 $('f').extra.before(gal);
+// Présentation (texte affiché dans la section « Présentation »), une zone par langue
+const LGS = ['fr', 'en', 'es', 'ro', 'ru'];
+const sumI = {};
+LGS.forEach(l => { const t = document.createElement('textarea'); t.rows = 4; t.placeholder = 'Présentation ' + l.toUpperCase() + ' (Entrée = nouveau paragraphe)'; sumI[l] = t; });
+gal.before(...LGS.map(l => sumI[l]));
 
 // Position sur la carte : clic sur la carte ou saisie des coordonnées
 const mk = (ph) => { const i = document.createElement('input'); i.placeholder = ph; i.inputMode = 'decimal'; return i; };
@@ -67,7 +72,8 @@ async function load() {
                 b('Rejeter', async () => { await api('candidates/' + x._id + '/reject', { method: 'POST' }); load(); }); }
     else { b('Modifier', () => {
       const f = $('f'); editId = x._id; f.classList.remove('hide');
-      const { _id, __v, createdAt, updatedAt, slug, status, cover, title, gallery, location, ...rest } = x;
+      const { _id, __v, createdAt, updatedAt, slug, status, cover, title, gallery, location, summary, ...rest } = x;
+      LGS.forEach(l => sumI[l].value = (summary && summary[l]) || '');
       setPoint(location && location.lat, location && location.lng, true); setTimeout(() => pmap && pmap.invalidateSize(), 200);
       gal.value = (gallery || []).join('\n');
       f.slug.value = slug || ''; f.status.value = status || 'draft'; f.cover.value = cover || '';
@@ -85,6 +91,8 @@ $('f').onsubmit = async e => {
   let extra = {}; try { extra = f.extra.value ? JSON.parse(f.extra.value) : {}; } catch { return $('msg').textContent = 'JSON invalide'; }
   const body = { slug: f.slug.value, status: f.status.value, cover: f.cover.value || undefined,
     title: { fr: f.fr.value, en: f.en.value, es: f.es.value, ro: f.ro ? f.ro.value : '', ru: f.ru ? f.ru.value : '' }, ...extra, gallery: gal.value.split(/\s+/).filter(Boolean) };
+  const sm = {}; LGS.forEach(l => { if (sumI[l].value.trim()) sm[l] = sumI[l].value.trim(); });
+  if (Object.keys(sm).length) body.summary = sm; else if (editId && !extra.summary) body.summary = {};
   const la = parseFloat(latI.value), ln = parseFloat(lngI.value);
   if (!isNaN(la) && !isNaN(ln)) body.location = { lat: la, lng: ln };
   else if (editId && !extra.location) body.location = { lat: null, lng: null };
