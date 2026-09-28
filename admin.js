@@ -55,6 +55,11 @@ clr.onclick = () => setPoint(null, null);
   };
   document.head.append(js);
 })();
+// Recherche dans la liste
+const qI = document.createElement('input'); qI.placeholder = 'Rechercher une fiche dans cette rubrique (ex : kara gani)…';
+$('list').before(qI);
+const applyFilter = () => { const v = qI.value.trim().toLowerCase(); document.querySelectorAll('#list .row').forEach(r => r.style.display = !v || r.textContent.toLowerCase().includes(v) ? '' : 'none'); };
+qI.oninput = applyFilter;
 async function load() {
   const c = $('col').value, cand = c === 'candidates';
   $('f').classList.toggle('hide', cand);
@@ -65,7 +70,7 @@ async function load() {
   const cnt = document.createElement('p'); cnt.textContent = d.length + ' fiche(s) dans « ' + $('col').selectedOptions[0].textContent + ' »'; $('list').append(cnt);
   d.forEach(x => {
     const row = document.createElement('div'); row.className = 'row';
-    const t = document.createElement('span'); t.textContent = cand ? x.name + ' (' + x.source + ')' : ((x.title && x.title.fr) || x.slug) + ' — ' + x.status;
+    const t = document.createElement('span'); t.textContent = cand ? x.name + ' (' + x.source + ')' : ((x.title && x.title.fr) || x.slug) + ' [' + x.slug + '] — ' + x.status;
     row.append(t);
     const b = (label, fn) => { const e = document.createElement('button'); e.textContent = label; e.onclick = fn; row.append(e); };
     if (cand) { b('Valider', async () => { await api('candidates/' + x._id + '/approve', { method: 'POST' }); load(); });
@@ -85,6 +90,7 @@ async function load() {
     b('Supprimer', async () => { if (confirm('Supprimer ?')) { await api(c + '/' + x._id, { method: 'DELETE' }); load(); } }); }
     $('list').append(row);
   });
+  applyFilter();
 }
 $('f').onsubmit = async e => {
   e.preventDefault(); const f = e.target;
