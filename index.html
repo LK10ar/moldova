@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moldova Explorer — Vin, culture & Transnistrie</title>
+<meta name="description" content="Circuits, vin, monastères, événements et Transnistrie en Moldavie.">
+<style>
+:root{--bg:#fbf7ef;--fg:#2a2118;--mut:#6f6250;--card:#fff;--line:#e6dcc8;--acc:#8c2340;--acc2:#2f5d3a}
+@media(prefers-color-scheme:dark){:root{--bg:#14100b;--fg:#f3ead9;--mut:#b5a78f;--card:#211b13;--line:#3a3022;--acc:#e58aa0}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 Georgia,serif}
+body.lock,body.nav-open{overflow:hidden}
+button,select,input{font:inherit;color:inherit}
+[hidden]{display:none!important}
+header{position:sticky;top:0;z-index:25;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.bar{max-width:1180px;margin:auto;display:flex;align-items:center;gap:12px;padding:10px 16px}
+.logo{font-weight:700;font-size:24px;color:var(--acc);text-decoration:none;margin-inline-end:auto}
+nav{display:flex;gap:4px}
+nav button{background:none;border:1px solid transparent;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:15px;white-space:nowrap}
+nav button:hover{background:var(--line)}
+nav button.on{border-color:var(--acc);color:var(--acc)}
+select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer}
+.bg{display:none;background:none;border:1px solid var(--line);border-radius:8px;width:42px;height:38px;font-size:22px;line-height:1;cursor:pointer;position:relative;z-index:40}
+#scrim{position:fixed;inset:0;background:#000a;z-index:20;display:none}
+.hero{padding:84px 16px;text-align:center;color:#fff;background:linear-gradient(#0005,#000a),var(--hero,linear-gradient(135deg,#8c2340,#2f5d3a));background-size:cover;background-position:center}
+.hero h1{margin:0 0 8px;font-size:clamp(28px,6vw,52px);text-shadow:0 2px 12px #0008}
+.hero p{margin:0;font-size:clamp(15px,2.4vw,19px);text-shadow:0 2px 8px #0008}
+main{max-width:1180px;margin:auto;padding:22px 16px;scroll-margin-top:90px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 13px;font-size:14px;cursor:pointer}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+#q{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;flex:0 1 260px;min-width:170px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.empty{grid-column:1/-1;padding:40px;text-align:center;color:var(--mut);border:1px dashed var(--line);border-radius:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.card:hover,.card:focus-visible{transform:translateY(-4px);box-shadow:0 14px 30px #0006;outline:none}
+.ph{aspect-ratio:16/10;background:linear-gradient(135deg,#e0a040,#b5451b) center/cover;display:grid;place-items:center;font-size:40px}
+.ph.ld span{display:none}
+.card .b{padding:12px 14px 14px}
+.card h3{margin:0 0 4px;font-size:18px}
+.meta{font:13px system-ui;color:var(--mut)}
+.ds{margin:6px 0 0;font:14px/1.45 system-ui;color:var(--mut);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tag{display:inline-block;font:12px system-ui;background:var(--line);border-radius:6px;padding:3px 8px;margin:6px 6px 0 0}
+html[dir=rtl] .tag{margin:6px 0 0 6px}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:24px 16px;font:14px system-ui;color:var(--mut)}
+footer .in{max-width:1180px;margin:auto;display:flex;flex-wrap:wrap;gap:8px 20px}
+footer a{color:var(--mut)}footer .cr{flex-basis:100%;font-size:12px}
+#top{position:fixed;inset-inline-end:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:46px;height:46px;border-radius:50%;border:0;background:var(--acc);color:#fff;font-size:22px;cursor:pointer;box-shadow:0 6px 18px #0006;opacity:0;pointer-events:none;transform:translateY(12px);transition:.25s;z-index:50}
+#top.show{opacity:1;pointer-events:auto;transform:none}
+/* fiche détail */
+#modal{position:fixed;inset:0;z-index:60;background:#000c;overflow-y:auto;overscroll-behavior:contain}
+.x{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));inset-inline-end:14px;z-index:70;width:42px;height:42px;border-radius:50%;border:0;background:#000b;color:#fff;font-size:22px;cursor:pointer}
+.sheet{max-width:980px;margin:3vh auto;background:var(--card);border-radius:16px;overflow:hidden;animation:up .25s ease}
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.mh{position:relative;height:clamp(250px,48vh,460px);background:linear-gradient(135deg,#e0a040,#b5451b) center/cover}
+.mh::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,var(--card))}
+.mh h2{position:absolute;z-index:1;inset-inline:24px;bottom:14px;margin:0;font-size:clamp(26px,5vw,44px);line-height:1.15}
+.mb{padding:4px 24px 30px}
+.mb section{margin-top:24px}
+.mb h3{margin:0 0 8px;color:var(--acc);font-size:21px}
+.mb p{margin:0 0 10px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.facts div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.facts b{display:block;font:12px system-ui;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.stg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.stg span{font:14px system-ui;border:1px solid var(--line);border-radius:99px;padding:4px 11px;background:var(--bg)}
+.car{position:relative}.gal{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.gal::-webkit-scrollbar{display:none}.cb{position:absolute;top:50%;translate:0 -50%;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:#000b;color:#fff;font-size:22px;cursor:pointer}.cb[data-d="-1"]{inset-inline-start:6px}.cb[data-d="1"]{inset-inline-end:6px}.vid{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:12px;margin:0 0 10px}.lbn{position:fixed;top:50%;translate:0 -50%;width:46px;height:46px;border-radius:50%;border:0;background:#fff3;color:#fff;font-size:28px;cursor:pointer}
+.gal img{flex:0 0 min(78%,420px);scroll-snap-align:start;aspect-ratio:4/3;object-fit:cover;border-radius:10px;cursor:zoom-in;background:var(--line)}
+.gal img:hover{transform:scale(1.03)}
+.sk{color:var(--mut);font:14px system-ui}
+.src{font:13px system-ui;color:var(--mut)}.src a{color:var(--acc)}
+#mx iframe{width:100%;height:340px;border:0;border-radius:12px;background:var(--line)}
+.lb{position:fixed;inset:0;z-index:90;background:#000e;display:grid;place-items:center;cursor:zoom-out}
+.lb img{max-width:96vw;max-height:92vh;border-radius:6px}
+@media(max-width:820px){
+ .bg{display:block}
+ nav{position:fixed;top:0;bottom:0;inset-inline-end:0;width:min(82vw,310px);background:var(--card);flex-direction:column;padding:calc(70px + env(safe-area-inset-top,0px)) 14px 16px;gap:6px;transform:translateX(100%);transition:transform .25s;z-index:30;box-shadow:-8px 0 30px #0008}
+ html[dir=rtl] nav{transform:translateX(-100%);box-shadow:8px 0 30px #0008}
+ body.nav-open nav{transform:none}
+ body.nav-open #scrim{display:block}
+ nav button{text-align:start;font-size:18px;padding:13px 12px}
+ .sheet{margin:0;border-radius:0;min-height:100%}
+ .mb{padding:4px 16px 30px}
+ .mh h2{inset-inline:16px}
+ .hero{padding:56px 16px}
+ .grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+}
+.pin{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px #0007;font-size:16px}
+#bigmap{height:min(72vh,660px);border-radius:14px;border:1px solid var(--line);position:relative;z-index:0}
+nav{min-width:0;overflow-x:auto;scrollbar-width:none}
+@media(max-width:820px){#bigmap{height:68vh}nav{overflow-x:visible}}
+</style></head><body>
+<header><div class="bar">
+<a class="logo" href="./">Moldova Explorer</a>
+<nav id="nav"></nav>
+<select id="lang" aria-label="Langue"><option value="fr">FR</option><option value="ro">RO</option><option value="ru">RU</option><option value="en">EN</option><option value="es">ES</option></select>
+<button class="bg" id="bg" aria-label="Menu" aria-expanded="false">☰</button>
+</div></header>
+<div id="scrim"></div>
+<section class="hero"><h1 id="h1"></h1><p id="sub"></p></section>
+<main><div id="view"></div></main>
+<footer><div class="in" id="foot"></div></footer>
+<button id="top" aria-label="Haut de page">↑</button>
+<div id="modal" hidden><button class="x" aria-label="Fermer">✕</button><div class="sheet" id="sheet"></div></div>
+<div id="lb" class="lb" hidden><button class="lbn" data-d="-1" style="left:10px">‹</button><img alt=""><button class="lbn" data-d="1" style="right:10px">›</button></div>
+<script>
+(()=>{
+const API='https://back-djazair.onrender.com';
+const LG=['fr','en','es','ro','ru'];
+const $=id=>document.getElementById(id);
+const ls={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+let lang=ls.get('lang');
+if(!LG.includes(lang)){const n=(navigator.language||'fr').slice(0,2);lang=LG.includes(n)?n:'fr'}
+let tab=0,filt='all',q='',cur=null,mtok=0;
+const CATS=['c','a','g','h','t','e','n','m'];
+const ICO={c:'🚌',a:'🥾',g:'🍷',h:'🏛️',t:'🏰',e:'🎉',n:'📰',m:'🗺️'};
+
+/* ---------- Traductions ---------- */
+const T={
+fr:{h1:"Découvrez la Moldavie",sub:"Vins, monastères, forteresses et Transnistrie au cœur de l'Europe de l'Est",nav:["Circuits","Activités","Vin & Gastronomie","Histoire & Culture","Transnistrie","Événements","Actualités","Carte"],all:"Tous",days:"jours",search:"Rechercher…",about:"Présentation",history:"Histoire",gallery:"Photos",map:"Localisation",openmap:"Ouvrir dans OpenStreetMap",src:"Source : Wikipédia",dur:"Durée",trn:"Transport",lod:"Hébergement",stg:"Étapes",loading:"Chargement…",empty:"Aucun résultat.",none:"Aucune actualité publiée pour le moment. Les actualités et événements s'ajoutent depuis le back-office.",top:"Haut de page",menu:"Menu",close:"Fermer",legal:["Mentions légales","CGU","CGV","Confidentialité","Sécurité"]},
+en:{h1:"Discover Moldova",sub:"Wine, monasteries, fortresses and Transnistria in the heart of Eastern Europe",nav:["Tours","Activities","Wine & Food","History & Culture","Transnistria","Events","News","Map"],all:"All",days:"days",search:"Search…",about:"Overview",history:"History",gallery:"Photos",map:"Location",openmap:"Open in OpenStreetMap",src:"Source: Wikipedia",dur:"Duration",trn:"Transport",lod:"Accommodation",stg:"Stops",loading:"Loading…",empty:"No results.",none:"No news published yet. News and events are added from the back-office.",top:"Back to top",menu:"Menu",close:"Close",legal:["Legal notice","Terms of use","Terms of sale","Privacy","Security"]},
+es:{h1:"Descubre Moldavia",sub:"Vino, monasterios, fortalezas y Transnistria en el corazón de Europa del Este",nav:["Circuitos","Actividades","Vino y Gastronomía","Historia y Cultura","Transnistria","Eventos","Noticias","Mapa"],all:"Todos",days:"días",search:"Buscar…",about:"Presentación",history:"Historia",gallery:"Fotos",map:"Ubicación",src:"Fuente: Wikipedia",dur:"Duración",loading:"Cargando…",empty:"Sin resultados.",top:"Subir",menu:"Menú",close:"Cerrar",legal:["Aviso legal","Condiciones de uso","Condiciones de venta","Privacidad","Seguridad"]},
+ro:{h1:"Descoperă Moldova",sub:"Vin, mănăstiri, cetăți și Transnistria, în inima Europei de Est",nav:["Circuite","Activități","Vin și gastronomie","Istorie și cultură","Transnistria","Evenimente","Noutăți","Hartă"],all:"Toate",days:"zile",search:"Caută…",about:"Prezentare",history:"Istorie",gallery:"Fotografii",map:"Locație",src:"Sursa: Wikipedia",dur:"Durată",trn:"Transport",lod:"Cazare",stg:"Etape",loading:"Se încarcă…",empty:"Niciun rezultat.",top:"Sus",menu:"Meniu",close:"Închide",legal:["Mențiuni legale","Termeni de utilizare","Termeni de vânzare","Confidențialitate","Securitate"]},
+ru:{h1:"Откройте для себя Молдову",sub:"Вино, монастыри, крепости и Приднестровье в сердце Восточной Европы",nav:["Туры","Активности","Вино и кухня","История и культура","Приднестровье","События","Новости","Карта"],all:"Все",days:"дн.",search:"Поиск…",about:"Обзор",history:"История",gallery:"Фото",map:"Расположение",src:"Источник: Википедия",dur:"Длительность",trn:"Транспорт",lod:"Проживание",stg:"Этапы",loading:"Загрузка…",empty:"Ничего не найдено.",top:"Наверх",menu:"Меню",close:"Закрыть",legal:["Правовая информация","Условия использования","Условия продажи","Конфиденциальность","Безопасность"]}};
+for(const k of ['es','ro','ru'])T[k]={...T.en,...T[k]};
+const SUB={
+fr:{centre:"Centre",nord:"Nord",sud:"Sud",gagaouzie:"Gagaouzie",transnistrie:"Transnistrie",vin:"Vin",nature:"Nature",urbain:"Ville",plat:"Plat",dessert:"Dessert",monastere:"Monastère",forteresse:"Forteresse",musee:"Musée",site:"Site",bus:"Bus",velo:"Vélo",pied:"À pied",hotel:"Hôtel",pension:"Pension",habitant:"Chez l'habitant"},
+en:{centre:"Central",nord:"North",sud:"South",gagaouzie:"Gagauzia",transnistrie:"Transnistria",vin:"Wine",nature:"Nature",urbain:"City",plat:"Dish",dessert:"Dessert",monastere:"Monastery",forteresse:"Fortress",musee:"Museum",site:"Site",bus:"Coach",velo:"Bike",pied:"On foot",hotel:"Hotel",pension:"Guesthouse",habitant:"Homestay"}};
+const A=a=>typeof a==='string'?{fr:a,en:a}:{fr:a[0],en:a[1]};
+const ITEMS=[];
+const add=(cat,sub,w,lat,lng,n,d,x={})=>ITEMS.push({id:cat+(ITEMS.filter(i=>i.cat===cat).length+1),cat,sub,w,lat,lng,n:A(n),d:A(d),...x,when:x.when&&A(x.when)});
+
+/* ---------- Catalogue (photos et histoire viennent de Wikipédia, en fr/es/ro/ru/en) ---------- */
+// Circuits
+add('c','centre',"Chișinău",47.0105,28.8638,["Chișinău & vignobles du Codru","Chișinău & Codru wine country"],["Chais souterrains de Cricova et Mileștii Mici, Orheiul Vechi et centre de Chișinău.","Underground cellars of Cricova and Mileștii Mici, Orheiul Vechi and central Chișinău."],{days:3,tr:'bus',lg:['hotel'],st:"Chișinău · Cricova · Mileștii Mici · Orheiul Vechi"});
+add('c','nord',"Soroca",48.1583,28.2917,["Nord : Soroca & Saharna","North: Soroca & Saharna"],["Forteresse de Soroca sur le Dniestr, cascades et monastère de Saharna, ville de Bălți.","Soroca fortress on the Dniester, Saharna waterfalls and monastery, the city of Bălți."],{days:3,tr:'bus',lg:['hotel','pension'],st:"Bălți · Soroca · Saharna · Rezina"});
+add('c','sud',"Cahul",45.9042,28.1944,["Valul lui Traian & Prut","Valul lui Traian & the Prut"],["Route des vins du sud, Cahul, vallée du Prut et réserve naturelle.","Southern wine route, Cahul, the Prut valley and nature reserve."],{days:2,tr:'bus',lg:['pension'],st:"Cahul · Vulcănești · Valea Perjei · Prut inférieur"});
+add('c','gagaouzie',"Comrat",46.3,28.65,["Gagaouzie","Gagauzia"],["Comrat, capitale de l'autonomie gagaouze : culture turcophone orthodoxe, vins et cuisine locale.","Comrat, capital of the Gagauz autonomy: Orthodox Turkic-speaking culture, wine and local food."],{days:2,tr:'bus',lg:['habitant'],st:"Comrat · Congaz · Vulcănești"});
+add('c','transnistrie',"Tiraspol",46.8403,29.6433,["Transnistrie en 2 jours","Transnistria in 2 days"],["Bender, Tiraspol et Chițcani : héritage soviétique, forteresse et monastère. Passeport requis au poste de contrôle.","Bender, Tiraspol and Chițcani: Soviet heritage, fortress and monastery. Bring your passport for the checkpoint."],{days:2,tr:'bus',lg:['hotel'],st:"Chișinău · Bender · Tiraspol · Chițcani"});
+// Activités
+add('a','vin',"Cricova",47.1367,28.8683,["Dégustation dans les caves de Cricova","Tasting in the Cricova cellars"],["Descente en petit train dans des kilomètres de galeries calcaires, puis dégustation de vins pétillants.","Ride a small train through kilometres of limestone galleries, then taste sparkling wines."]);
+add('a','vin',"Mileștii Mici",46.8517,28.8286,["Mileștii Mici : la plus grande cave du monde","Mileștii Mici: the world's largest wine cellar"],["Une ville souterraine de galeries pour des millions de bouteilles, inscrite au Guinness des records.","An underground town of galleries holding millions of bottles, listed in the Guinness World Records."]);
+add('a','nature',"Orheiul Vechi",47.305,28.983,["Randonnée à Orheiul Vechi","Hike at Orheiul Vechi"],["Falaises sur la rivière Răut, monastère troglodyte et villages traditionnels.","Cliffs above the Răut river, a cave monastery and traditional villages."]);
+add('a','nature',"Prutul de Jos",45.6,28.2,["Réserve du Prut inférieur","Lower Prut Reserve"],["Zone humide et lac Beleu : observation des oiseaux et balades en nature dans le sud.","Wetlands and Lake Beleu: birdwatching and nature walks in the south."]);
+add('a','urbain',"Chișinău",47.0245,28.8322,["Chișinău à pied","Chișinău on foot"],["Parc Ștefan cel Mare, cathédrale de la Nativité, arc de triomphe et marché central.","Ștefan cel Mare park, the Nativity Cathedral, the Triumphal Arch and the central market."]);
+// Vin & gastronomie
+add('g','plat',"Mămăligă",47.0105,28.8638,"Mămăligă","Polenta de maïs servie avec fromage, crème aigre ou viande.");
+add('g','plat',"Plăcintă",47.0105,28.8638,"Plăcinte","Galettes fourrées au fromage, à la pomme de terre ou au chou, cuites à la poêle.");
+add('g','plat',"Sarmale",47.0105,28.8638,"Sarmale","Feuilles de chou ou de vigne farcies de viande et de riz.");
+add('g','plat',"Zeamă",47.0105,28.8638,"Zeamă","Soupe de poulet aux nouilles maison et à l'acidité de bortsch.");
+add('g','vin',"Cricova",47.1367,28.8683,"Cricova","Cave souterraine et vins effervescents.",{});
+add('g','vin',"Mileștii Mici",46.8517,28.8286,"Mileștii Mici","Immense cave souterraine à l'sud de Chișinău.",{});
+add('g','vin',"Château Vartely",47.3728,28.8231,"Château Vartely","Domaine près d'Orhei, région du Codru.");
+add('g','vin',"Castel Mimi",46.9333,29.0167,"Castel Mimi","Château et cave à Bulboaca, région du Codru.");
+add('g','vin',"Purcari",46.5586,29.9906,["Purcari","Purcari"],["Domaine historique de la région Ștefan Vodă, réputé pour ses rouges (Rară Neagră).","Historic estate in the Ștefan Vodă region, known for its reds (Rară Neagră)."]);
+add('g','vin',"Gogu Winery Moldova",46.6333,29.4167,"Gogu Winery","Cave de la région Ștefan Vodă, près de Cauşeni.");
+add('g','vin',"Asconi",46.87,28.87,"Asconi","Domaine à Puhoi, proche de Chișinău.");
+add('g','vin',"Chateau Cojușna",46.9667,28.85,"Château Cojușna","Cave moderne dans la région du Codru.");
+add('g','vin',"Kvint Tiraspol",46.8403,29.6433,"Kvint (Tiraspol)","Célèbre distillerie de brandy en Transnistrie.");
+// Histoire & culture
+add('h','forteresse',"Forteresse de Soroca",48.1583,28.2917,["Forteresse de Soroca","Soroca Fortress"],["Forteresse ronde du XVe siècle sur le Dniestr, bâtie sous Ștefan cel Mare.","15th-century round fortress on the Dniester built under Stephen the Great."]);
+add('h','monastere',"Monastère d'Orheiul Vechi",47.305,28.983,["Orheiul Vechi","Orheiul Vechi"],["Complexe rupestre et ancienne cité, l'un des sites les plus emblématiques du pays.","A cave monastery and ancient city, one of the country's most iconic sites."]);
+add('h','monastere',"Monastère de Căpriana",47.0967,28.5,"Căpriana","Un des plus anciens monastères du pays, au cœur des forêts du Codru.");
+add('h','monastere',"Monastère de Curchi",47.2097,28.9258,"Curchi","Monastère au bord d'un lac, ensemble néoclassique du XIXe siècle.");
+add('h','monastere',"Monastère de Saharna",47.6425,28.9817,"Saharna","Monastère et cascades sur les rives du Dniestr.");
+add('h','musee',"Musée national d'histoire de la Moldavie",47.0242,28.8339,["Musée national d'histoire","National Museum of History"],["Collections archéologiques et ethnographiques au cœur de Chișinău.","Archaeological and ethnographic collections in the heart of Chișinău."]);
+// Transnistrie
+add('t','forteresse',"Forteresse de Bender",46.8256,29.4767,["Forteresse de Bender","Bender Fortress"],["Forteresse ottomane du XVIe siècle au bord du Dniestr, l'un des sites majeurs de la région.","16th-century Ottoman fortress on the Dniester, one of the region's major sights."]);
+add('t','urbain',"Tiraspol",46.8403,29.6433,["Tiraspol","Tiraspol"],["Capitale de la Transnistrie : monuments et architecture de l'ère soviétique, bords du Dniestr.","Capital of Transnistria: Soviet-era monuments and architecture along the Dniester."]);
+add('t','monastere',"Monastère de Noul Neamț",46.7992,29.6031,"Noul Neamț (Chițcani)","Monastère orthodoxe en bord de Dniestr, près de Tiraspol.");
+add('t','vin',"Kvint Tiraspol",46.8403,29.6433,"Kvint","Distillerie fondée à l'ère soviétique, brandys et dégustations.");
+// Événements (dates à confirmer)
+add('e','',"Ziua Națională a Vinului",47.0245,28.8322,["Fête nationale du vin","National Wine Day"],["Grand festival du vin dans le centre de Chișinău, traditionnellement au début d'octobre. Dates à confirmer.","Big wine festival in central Chișinău, traditionally in early October. Dates to be confirmed."],{when:["Début octobre","Early October"]});
+add('e','',"Hramul Chișinăului",47.0245,28.8322,["Fête de la ville de Chișinău","Chișinău City Day"],["Concerts et animations pour la fête de la capitale, le 14 octobre.","Concerts and events for the capital's day, on 14 October."],{when:["14 octobre","14 October"]});
+add('e','',"Mărțișor",47.0105,28.8638,["Mărțișor","Mărțișor"],["Tradition du 1er mars : on offre un petit fil rouge et blanc annonçant le printemps.","1 March tradition: giving a red-and-white string to welcome spring."],{when:["1er–8 mars","1–8 March"]});
+add('e','',"Ziua Independenței",47.0245,28.8322,["Fête de l'indépendance","Independence Day"],["Célébrations nationales, le 27 août.","National celebrations on 27 August."],{when:["27 août","27 August"]});
+// Actualités / bon à savoir
+add('n','',"Moldavie",47.0105,28.8638,["Bon à savoir : Transnistrie","Good to know: Transnistria"],["Le passage se fait à un poste de contrôle : prévoyez votre passeport. Consultez les conseils aux voyageurs de votre pays avant de partir.","Crossing is through a checkpoint: bring your passport. Check your government's travel advice before you go."]);
+
+/* ---------- Utilitaires ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const tx=(o,l=lang)=>(o&&(o[l]||o.en||o.fr))||'';
+const nameOf=i=>tx(i.n),descOf=i=>tx(i.d);
+const lab=k=>(SUB[lang]&&SUB[lang][k])||SUB.en[k]||k;
+const byId=id=>ITEMS.find(i=>i.id===id);
+const fmtDate=d=>{try{return d?new Date(d).toLocaleDateString(lang):''}catch{return''}};
+const cut=(s,n)=>{if(s.length<=n)return s;const i=s.lastIndexOf('. ',n);return s.slice(0,i>250?i+1:n)+(i>250?'':'…')};
+const BAD=/flag|drapeau|logo|icon|map|carte|blason|armoiries|locator|wikidata|symbol|pictogram|plan|schéma|diagram|portrait|signature|coat/i;
+
+/* ---------- Wikipédia (photos, histoire, coordonnées) ---------- */
+const wapi=async(h,p)=>{
+ const u=new URL(`https://${h}.wikipedia.org/w/api.php`);
+ Object.entries({action:'query',format:'json',origin:'*',redirects:1,...p}).forEach(([k,v])=>u.searchParams.set(k,v));
+ const r=await fetch(u);if(!r.ok)throw new Error('http');
+ const j=await r.json();return Object.values((j.query&&j.query.pages)||{});
+};
+async function cover(it,sz=500){
+ if(it.cover)return it.cover;
+ it.cvs=it.cvs||{};
+ if(it.cvs[sz]!==undefined)return it.cvs[sz];
+ const key='dz2:'+it.id+':'+sz;
+ try{const c=JSON.parse(ls.get(key)||'null');if(c&&Date.now()-c.t<6048e5)return it.cvs[sz]=c.u}catch{}
+ let u=null,ok=false;
+ try{
+  const ps=(await wapi('fr',{generator:'search',gsrsearch:it.w||tx(it.n,'fr'),gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz})).sort((a,b)=>a.index-b.index);
+  const p=ps.find(p=>p.thumbnail);u=p?p.thumbnail.source:null;ok=true;
+   if(!u){const p2=(await wapi('fr',{generator:'search',gsrsearch:tx(it.n,'fr')+' Moldavie',gsrlimit:4,prop:'pageimages',piprop:'thumbnail',pithumbsize:sz})).sort((a,b)=>a.index-b.index).find(p=>p.thumbnail);u=p2?p2.thumbnail.source:null}
+ }catch{}
+ it.cvs[sz]=u;
+ if(ok)ls.set(key,JSON.stringify({u,t:Date.now()}));
+ return u;
+}
+async function detail(it,lg){
+ const p={generator:'search',gsrsearch:it.w||tx(it.n,'fr'),gsrlimit:4,prop:'extracts|pageimages|coordinates|langlinks',exintro:1,explaintext:1,exlimit:'max',piprop:'thumbnail',pithumbsize:1280,colimit:1,lllimit:1};
+ if(lg!=='fr')p.lllang=lg;
+ const ps=(await wapi('fr',p)).sort((a,b)=>a.index-b.index);
+ const m=ps[0];if(!m)return{gal:[]};
+ const r={title:m.title,wl:'fr',text:m.extract||'',gal:[]};
+ const im=ps.find(x=>x.thumbnail);r.img=im&&im.thumbnail.source;
+ const co=(m.coordinates||[])[0];if(co){r.lat=co.lat;r.lng=co.lon}
+ const ll=m.langlinks&&m.langlinks[0];
+ const jobs=[];
+ if(lg!=='fr'&&ll)jobs.push(wapi(lg,{titles:ll['*'],prop:'extracts',exintro:1,explaintext:1}).then(a=>{const x=a[0];if(x&&x.extract){r.text=x.extract;r.title=x.title;r.wl=lg}}).catch(()=>{}));
+ jobs.push(wapi('fr',{generator:'images',titles:m.title,gimlimit:50,prop:'imageinfo',iiprop:'url|mime',iiurlwidth:960}).then(a=>{
+  r.gal=a.filter(x=>{const i=x.imageinfo&&x.imageinfo[0];return i&&/jpeg/.test(i.mime)&&i.thumburl&&!BAD.test(x.title)}).map(x=>x.imageinfo[0].thumburl).slice(0,12);
+ }).catch(()=>{}));
+ await Promise.all(jobs);
+ return r;
+}
+
+/* ---------- Données du back-office (API Render) ---------- */
+const SUBMAP={randonnee:'rando',plongee:'plongee',bivouac:'bivouac',artisanat:'artisanat',urbain:'urbain'};
+function fromApi(cat,x){
+ const loc=x.location||{};
+ return{id:'api'+cat+x._id,cat,api:1,
+  sub:cat==='c'?x.region:cat==='a'?(SUBMAP[x.category]||x.category):cat==='g'?x.type:cat==='h'?x.kind:'',
+  w:null,lat:loc.lat,lng:loc.lng,n:x.title||{},d:x.summary||{},cover:x.cover,gallery:x.gallery||[],
+  days:x.days,tr:x.transport,lg:x.lodging||[],st:'',it:x.itinerary,body:x.body,date:x.publishedAt,videos:x.videos,links:x.links,auto:x.auto,route:x.route&&x.route.start&&x.route.end?[[x.route.start.name||'',x.route.start.lat,x.route.start.lng],[x.route.end.name||'',x.route.end.lat,x.route.end.lng]]:null};
+}
+async function loadApi(){
+ ITEMS.splice(0,ITEMS.length,...ITEMS.filter(i=>!i.api));
+ const cols={circuits:'c',activities:'a',restaurants:'g',heritage:'h',news:'n'};
+ await Promise.all(Object.entries(cols).map(async([col,cat])=>{
+  try{
+   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),12000);
+   const r=await fetch(`${API}/api/${col}`,{signal:ctl.signal});clearTimeout(to);
+   if(!r.ok)return;
+   (await r.json()).forEach(x=>ITEMS.push(fromApi((x.tags||[]).includes('event')?'e':(x.wilaya||'').toLowerCase()==='transnistrie'?'t':cat,x)));
+  }catch{}
+ }));
+ if($('modal').hidden)render();
+}
+
+/* ---------- Rendu de la page ---------- */
+function render(){
+ const t=T[lang],h=document.documentElement;
+ h.lang=lang;h.dir='ltr';
+ $('lang').value=lang;$('h1').textContent=t.h1;$('sub').textContent=t.sub;
+ $('bg').setAttribute('aria-label',t.menu);$('top').setAttribute('aria-label',t.top);document.querySelector('.x').setAttribute('aria-label',t.close);
+ $('nav').innerHTML=t.nav.map((n,i)=>`<button class="${i===tab?'on':''}" data-tab="${i}">${esc(n)}</button>`).join('');
+ const ids=['mentions','cgu','cgv','confidentialite','securite'];
+ $('foot').innerHTML=t.legal.map((l,i)=>`<a href="legal.html#${ids[i]}">${esc(l)}</a>`).join('')+`<span>© Moldova Explorer</span>`;
+ const cat=CATS[tab];let chips='';
+ if(cat==='m'){$('view').innerHTML=mapHtml();initMap();return}
+ if(cat!=='n'&&cat!=='e'){
+  const subs=cat==='c'?['centre','nord','sud','gagaouzie','transnistrie']:[...new Set(ITEMS.filter(i=>i.cat===cat&&i.sub).map(i=>i.sub))];
+  chips=['all',...subs].map(k=>`<button class="chip ${k===filt?'on':''}" data-f="${esc(k)}">${k==='all'?esc(t.all):esc(lab(k))}</button>`).join('');
+ }
+ $('view').innerHTML=`<div class="tools"><div class="filters">${chips}</div><input id="q" type="search" placeholder="${esc(t.search)}" value="${esc(q)}"></div><div id="grid" class="grid"></div>`;
+ grid();
+}
+const card=i=>{
+ const t=T[lang];
+ let meta,tags='';
+ if(i.cat==='c'){
+  meta=(i.days?i.days+' '+t.days+' · ':'')+lab(i.sub);
+  tags=(i.tr?`<span class="tag">${esc(lab(i.tr))}</span>`:'')+((i.lg&&i.lg[0])?`<span class="tag">${esc(lab(i.lg[0]))}</span>`:'');
+ }else meta=i.cat==='n'?fmtDate(i.date):i.cat==='e'?(i.when?tx(i.when):fmtDate(i.date)):lab(i.sub);
+ return `<article class="card" tabindex="0" data-id="${esc(i.id)}"><div class="ph" data-id="${esc(i.id)}"><span>${ICO[i.cat]}</span></div><div class="b"><h3>${esc(nameOf(i))}</h3><div class="meta">${esc(meta)}</div>${tags}<p class="ds">${esc(descOf(i))}</p></div></article>`;
+};
+function grid(){
+ const cat=CATS[tab],t=T[lang],nq=norm(q);
+ const ws=nq.split(/\s+/).filter(Boolean);
+ const L=nq?ITEMS.filter(i=>{const z=norm(Object.values(i.n).join(' ')+' '+Object.values(i.d).join(' ')+' '+(i.w||''));return ws.every(w=>z.includes(w))}):ITEMS.filter(i=>i.cat===cat&&(filt==='all'||i.sub===filt));
+ $('grid').innerHTML=L.length?L.map(card).join(''):`<p class="empty">${esc(cat==='n'&&!ITEMS.some(i=>i.cat==='n')?t.none:t.empty)}</p>`;
+ if(nq.length>=3&&L.length<4)$('grid').insertAdjacentHTML('beforeend',`<div style="grid-column:1/-1;text-align:center"><button class="chip on" id="ask" data-ask="1">🔎 ${esc((ASK[lang]||ASK.en).replace('{q}',q))}</button></div>`);
+ watch();
+}
+function setBg(el,u){
+ if(!u)return;
+ const im=new Image();
+ im.onload=()=>{el.style.backgroundImage=`url("${u.replace(/"/g,'%22')}")`;el.classList.add('ld')};
+ im.src=u;
+}
+let io;
+function watch(){
+ if(io)io.disconnect();
+ io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;io.unobserve(e.target);
+  const it=byId(e.target.dataset.id);if(it)cover(it).then(u=>setBg(e.target,u));
+ }),{rootMargin:'250px'});
+ document.querySelectorAll('#grid .ph').forEach(p=>io.observe(p));
+}
+
+/* ---------- Fiche détail façon Netflix ---------- */
+function openM(it,push=true){
+ cur=it;const t=T[lang],tok=++mtok,m=$('modal');
+ const tags=it.cat==='c'?[it.sub,it.tr,...(it.lg||[])].filter(Boolean):[it.sub].filter(Boolean);
+ let h=`<div class="mh" id="mh"><h2>${esc(nameOf(it))}</h2></div><div class="mb">`;
+ if(tags.length)h+=`<div>${tags.map(k=>`<span class="tag">${esc(lab(k))}</span>`).join('')}</div>`;
+ h+=`<section><h3>${esc(t.about)}</h3><p>${esc(descOf(it))}</p>`;
+ if(it.body)h+=tx(it.body).split('\n').filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('');
+ if(it.when)h+=`<p class="src">📅 ${esc(tx(it.when))}</p>`;
+ if(it.cat==='n'&&it.date)h+=`<p class="src">${esc(fmtDate(it.date))}</p>`;
+ h+='</section>';
+ if(it.cat==='c'){
+  h+=`<section><div class="facts">`+
+   (it.days?`<div><b>${esc(t.dur)}</b>${it.days} ${esc(t.days)}</div>`:'')+
+   (it.tr?`<div><b>${esc(t.trn)}</b>${esc(lab(it.tr))}</div>`:'')+
+   ((it.lg&&it.lg.length)?`<div><b>${esc(t.lod)}</b>${esc(it.lg.map(lab).join(' · '))}</div>`:'')+`</div>`;
+  if(it.st)h+=`<div class="stg" title="${esc(t.stg)}">${it.st.split(' · ').map(s=>`<span>📍 ${esc(s)}</span>`).join('')}</div>`;
+  if(Array.isArray(it.it)&&it.it.length)h+=`<div class="stg" style="display:block">${it.it.map(d=>`<p><b>${esc(t.stg)} ${esc(d.day)} :</b> ${esc(tx(d.title))} — ${esc(tx(d.text))}</p>`).join('')}</div>`;
+  h+='</section>';
+ }
+ if(it.cat!=='n'&&it.cat!=='e')h+=`<section id="hs"><h3>${esc(t.history)}</h3><div id="hx" class="sk">${esc(t.loading)}</div></section>`;
+ h+=`<section id="gs" hidden><h3>${esc(t.gallery)}</h3><div class="car"><button class="cb" data-d="-1">‹</button><div id="gx" class="gal"></div><button class="cb" data-d="1">›</button></div></section><section id="ms" hidden><h3>${esc(t.map)}</h3><div id="mx"></div></section>`+vidHtml(it)+linkHtml(it)+`</div>`;
+ $('sheet').innerHTML=h;
+ if(push)history.pushState({m:1},'');
+ m.hidden=false;m.scrollTop=0;document.body.classList.add('lock');
+ // image d'en-tête : cover connue tout de suite, version large ensuite
+ const setHero=u=>{if(u&&tok===mtok)setBg($('mh'),u)};
+ if(it.cover)setHero(it.cover);else if(it.cvs&&it.cvs[500])setHero(it.cvs[500]);
+ const gal=[...(it.gallery||[])];
+ const showGal=g=>{
+  const all=[...new Set(g)].slice(0,14);
+  if(!all.length||tok!==mtok)return;
+  $('gs').hidden=false;$('gx').innerHTML=all.map(u=>`<img src="${esc(u)}" loading="lazy" alt="${esc(nameOf(it))}">`).join('');
+ };
+ const showMap=(lat,lng)=>{
+  if(it.route&&it.route.length>1&&tok===mtok){$('ms').hidden=false;routeMap(it.route,$('mx'),tok);return}
+   if(lat==null||lng==null||tok!==mtok)return;
+  const bb=[lng-.25,lat-.15,lng+.25,lat+.15].map(n=>n.toFixed(4)).join('%2C');
+  $('ms').hidden=false;
+  $('mx').innerHTML=`<iframe loading="lazy" title="${esc(nameOf(it))}" src="https://www.openstreetmap.org/export/embed.html?bbox=${bb}&layer=mapnik&marker=${lat}%2C${lng}"></iframe><p class="src"><a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=9/${lat}/${lng}" target="_blank" rel="noopener">${esc(t.openmap)}</a></p>`;
+ };
+ showGal(gal);showMap(it.lat,it.lng);
+ if(it.cat==='n'||it.cat==='e')return;
+ detail(it,lang).then(r=>{
+  if(tok!==mtok)return;
+  if(r.img)setHero(r.img);
+  if(r.text){
+   $('hx').className='';
+   $('hx').innerHTML=cut(r.text,1600).split('\n').filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('')+
+    `<p class="src">${esc(t.src)} — <a href="https://${r.wl}.wikipedia.org/wiki/${encodeURIComponent(r.title.replace(/ /g,'_'))}" target="_blank" rel="noopener">${esc(r.title)}</a></p>`;
+  }else $('hs').hidden=true;
+  showGal([...gal,...(r.gal||[])]);
+  if(it.lat==null)showMap(r.lat,r.lng);
+ }).catch(()=>{if(tok===mtok)$('hs').hidden=true});
+}
+function closeM(){
+ const m=$('modal');if(m.hidden)return;
+ m.hidden=true;mtok++;document.body.classList.remove('lock');
+ if(history.state&&history.state.m)history.back();
+}
+let LBL=[],LBI=0;
+function lb(src){LBL=[...document.querySelectorAll('.gal img')].map(i=>i.src);LBI=Math.max(0,LBL.indexOf(src));$('lb').querySelector('img').src=src;$('lb').hidden=false}
+function lbGo(d){if(!LBL.length)return;LBI=(LBI+d+LBL.length)%LBL.length;$('lb').querySelector('img').src=LBL[LBI]}
+const ASK={fr:'Introuvable ? Lancer la recherche automatique pour « {q} »',en:'Not found? Run an automatic search for “{q}”',es:'¿No lo encuentras? Buscar automáticamente «{q}»',ar:'ما لقيتش؟ ابحث تلقائياً عن «{q}»'};
+const ASKM={fr:['Recherche en cours…','Ajouté : ','Rien trouvé pour cette recherche.','Service indisponible, réessaie.'],en:['Searching…','Added: ','Nothing found.','Service unavailable, retry.'],es:['Buscando…','Añadido: ','No se encontró nada.','Servicio no disponible.'],ar:['جاري البحث…','تمت الإضافة: ','لا شيء.','الخدمة غير متاحة.']};
+async function askSearch(b){
+ const m=(ASKM[lang]||ASKM.en);b.disabled=true;b.textContent='⏳ '+m[0];
+ try{const r=await fetch(API+'/api/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q,cat:CATS[tab]==='c'?'a':CATS[tab]})});
+  const j=await r.json();if(!r.ok)throw 0;
+  if(j.added&&j.added.length){await loadApi();const n=$('ask');if(n){n.textContent='✅ '+m[1]+j.added.join(', ');n.disabled=true}}
+  else b.textContent='ℹ️ '+m[2];
+ }catch{b.disabled=false;b.textContent='⚠️ '+m[3]}
+}
+const VT={fr:'Vidéos',en:'Videos',es:'Vídeos',ar:'فيديو'},LT={fr:'Liens utiles',en:'Useful links',es:'Enlaces',ar:'روابط'};
+const okU=u=>/^https?:\/\//.test(u);
+const vidHtml=it=>{let h='';(it.videos||[]).filter(okU).forEach(u=>{let m;
+ if(m=u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/))h+=`<iframe class="vid" loading="lazy" allowfullscreen src="https://www.youtube.com/embed/${m[1]}"></iframe>`;
+ else if(m=u.match(/vimeo\.com\/(\d+)/))h+=`<iframe class="vid" loading="lazy" allowfullscreen src="https://player.vimeo.com/video/${m[1]}"></iframe>`;
+ else if(/\.(mp4|webm)(\?|$)/i.test(u))h+=`<video class="vid" controls src="${esc(u)}"></video>`;
+ else h+=`<p><a href="${esc(u)}" target="_blank" rel="noopener">▶ ${esc(u)}</a></p>`});
+ return h?`<section><h3>${esc((VT[lang]||VT.en))}</h3>${h}</section>`:''};
+const linkHtml=it=>{const l=(it.links||[]).filter(x=>x&&okU(x.url));return l.length?`<section><h3>${esc((LT[lang]||LT.en))}</h3>${l.map(x=>`<p><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label||x.url)}</a></p>`).join('')}</section>`:''};
+const SE={fr:['Départ','Arrivée','Tracé indicatif'],en:['Start','Finish','Indicative route'],es:['Salida','Llegada','Trazado indicativo'],ar:['البداية','النهاية','مسار تقريبي']};
+let LP;const loadL=()=>LP||(LP=new Promise((ok,ko)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.append(c);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=ok;sc.onerror=ko;document.head.append(sc)}));
+async function routeMap(pts,el,tok){
+ el.innerHTML='<div style="height:340px;border-radius:12px"></div>';
+ try{await loadL();if(tok!==mtok)return;const L=window.L,m=L.map(el.firstChild,{scrollWheelZoom:false});
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenStreetMap'}).addTo(m);
+  const ll=pts.map(p=>[p[1],p[2]]);L.polyline(ll,{color:'#8c2340',weight:4,dashArray:'8 6'}).addTo(m);
+  pts.forEach((p,i)=>L.marker(ll[i]).addTo(m).bindPopup(`<b>${i===0?(SE[lang]||SE.en)[0]:i===pts.length-1?(SE[lang]||SE.en)[1]:''}</b><br>${esc(p[0])}`));
+  m.fitBounds(ll,{padding:[30,30]});el.insertAdjacentHTML('beforeend',`<p class="src">${(SE[lang]||SE.en)[2]}</p>`);
+ }catch{el.innerHTML=''}
+}
+const MT={fr:['Carte interactive','Carte des routes du vin (PDF)','Voir la fiche'],en:['Interactive map','Wine routes map (PDF)','View details'],es:['Mapa interactivo','Mapa de rutas del vino (PDF)','Ver ficha'],ro:['Hartă interactivă','Harta drumurilor vinului (PDF)','Vezi fișa'],ru:['Интерактивная карта','Карта винных маршрутов (PDF)','Подробнее']};
+const MC={c:'#2f5d3a',a:'#c0562b',g:'#8c2340',h:'#8a5a00',t:'#1d4f9c',e:'#6b3fa0'};
+let BM,BL={};
+const mapHtml=()=>{const m=MT[lang]||MT.en,t=T[lang];return `<div class="tools"><div class="filters">${['c','a','g','h','t','e'].map(k=>`<button class="chip on" data-mf="${k}">${ICO[k]} ${esc(t.nav[CATS.indexOf(k)])}</button>`).join('')}</div><a class="chip on" href="Map-Wine-Routes-of-Moldova-2023-1.pdf" target="_blank" rel="noopener">📄 ${esc(m[1])}</a></div><div id="bigmap" role="region" aria-label="${esc(m[0])}"></div>`};
+async function initMap(){
+ const el=$('bigmap'),m=MT[lang]||MT.en;
+ try{await loadL()}catch{el.textContent='—';return}
+ const L=window.L;if(BM){BM.remove();BM=null}BL={};
+ BM=L.map(el).setView([47.2,28.6],7);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenStreetMap'}).addTo(BM);
+ ITEMS.filter(i=>i.lat!=null&&i.lng!=null&&MC[i.cat]).forEach(i=>{
+  const c=i.sub==='vin'?'#8c2340':MC[i.cat];
+  const mk=L.marker([i.lat,i.lng],{icon:L.divIcon({className:'',html:`<div class="pin" style="background:${c}">${i.sub==='vin'?'🍷':ICO[i.cat]}</div>`,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-14]})});
+  mk.bindPopup(`<b>${esc(nameOf(i))}</b><br>${esc(cut(descOf(i),110))}<br><a href="#" data-open="${esc(i.id)}">${esc(m[2])} →</a>`);
+  (BL[i.cat]=BL[i.cat]||L.layerGroup()).addLayer(mk);
+ });
+ Object.values(BL).forEach(g=>g.addTo(BM));
+}
+function closeNav(){document.body.classList.remove('nav-open');$('bg').textContent='☰';$('bg').setAttribute('aria-expanded','false')}
+
+/* ---------- Événements ---------- */
+document.addEventListener('click',e=>{
+ const g=s=>e.target.closest(s);let b;
+ if(b=g('.lbn')){lbGo(+b.dataset.d);return}
+ if(e.target.tagName==='IMG'&&g('#lb')){lbGo(1);return}
+ if(b=g('.cb')){const tr=b.parentNode.querySelector('.gal');tr.scrollBy({left:+b.dataset.d*tr.clientWidth*.8,behavior:'smooth'});return}
+ if(b=g('[data-ask]')){askSearch(b);return}
+ if(b=g('[data-open]')){e.preventDefault();const it=byId(b.dataset.open);if(it)openM(it);return}
+ if(b=g('[data-mf]')){const k=b.dataset.mf,on=b.classList.toggle('on');on?BL[k].addTo(BM):BM.removeLayer(BL[k]);return}
+ if(g('#lb')){$('lb').hidden=true;return}
+ if(b=g('[data-tab]')){tab=+b.dataset.tab;filt='all';q='';closeNav();render();document.querySelector('main').scrollIntoView({behavior:'smooth'});return}
+ if(b=g('[data-f]')){filt=b.dataset.f;render();return}
+ if(b=g('.gal img')){lb(b.src);return}
+ if(g('.x')){closeM();return}
+ if(e.target.id==='modal'){closeM();return}
+ if(b=g('.card')){const it=byId(b.dataset.id);if(it)openM(it)}
+});
+document.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;grid()}});
+document.addEventListener('keydown',e=>{
+ if(!$('lb').hidden&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){lbGo(e.key==='ArrowRight'?1:-1);return}
+ if(e.key==='Escape'){if(!$('lb').hidden)$('lb').hidden=true;else if(!$('modal').hidden)closeM();else closeNav()}
+ if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('card')){const it=byId(e.target.dataset.id);if(it)openM(it)}
+});
+window.addEventListener('popstate',()=>{if(!$('modal').hidden){$('modal').hidden=true;mtok++;document.body.classList.remove('lock')}});
+$('lang').onchange=e=>{lang=e.target.value;ls.set('lang',lang);render();if(!$('modal').hidden&&cur)openM(cur,false)};
+$('bg').onclick=()=>{const o=document.body.classList.toggle('nav-open');$('bg').textContent=o?'✕':'☰';$('bg').setAttribute('aria-expanded',o)};
+$('scrim').onclick=closeNav;
+$('top').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+window.addEventListener('scroll',()=>$('top').classList.toggle('show',window.scrollY>500),{passive:true});
+window.addEventListener('resize',()=>{if(innerWidth>820)closeNav()});
+
+render();
+cover({id:'hero',w:"Orheiul Vechi",n:{fr:'Orheiul Vechi'}},1920).then(u=>{if(u)document.querySelector('.hero').style.setProperty('--hero',`url("${u}")`)});
+loadApi();
+})();
+</script></body></html>
