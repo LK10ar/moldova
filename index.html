@@ -422,7 +422,7 @@ function openM(it,push=true){
  const tags=it.cat==='c'?[it.sub,it.tr,...(it.lg||[])].filter(Boolean):[it.sub].filter(Boolean);
  let h=`<div class="mh" id="mh"><h2>${esc(nameOf(it))}</h2></div><div class="mb">`;
  if(tags.length)h+=`<div>${tags.map(k=>`<span class="tag">${esc(lab(k))}</span>`).join('')}</div>`;
- h+=`<section><h3>${esc(t.about)}</h3><p>${esc(descOf(it))}</p>`;
+ h+=`<section><h3>${esc(t.about)}</h3>${String(descOf(it)).split(/\n+/).filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('')}`;
  if(it.body)h+=tx(it.body).split('\n').filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('');
  if(it.when)h+=`<p class="src">📅 ${esc(tx(it.when))}</p>`;
  if(it.cat==='n'&&it.date)h+=`<p class="src">${esc(fmtDate(it.date))}</p>`;
