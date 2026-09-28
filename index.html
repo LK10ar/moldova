@@ -294,8 +294,9 @@ const OVR={
 };
 const nrm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const GEN=/^(vinaria|winery|chateau|castel|domaine|crama|cave|monastere|musee|parc|lac|grotte|pestera|de|la|le|les|des|du|din|the|and|mai)$/;
+const ovrOf=it=>{const nn=nrm((it.n&&it.n.fr)||it.w||'');for(const k in OVR)if(nn.includes(k))return OVR[k];return null};
 function nameOk(it,title){
- const T=nrm(title),toks=nrm(((it.n&&it.n.fr)||'')+' '+(it.w||'')).split(/[^a-z0-9]+/).filter(t=>t.length>=4&&!GEN.test(t));
+ const T=nrm(title),toks=nrm(((it.n&&it.n.fr)||'')+' '+(it.cat==='g'&&it.sub==='vin'?'':(it.w||''))).split(/[^a-z0-9]+/).filter(t=>t.length>=4&&!GEN.test(t));
  return !toks.length||toks.some(t=>T.includes(t));
 }
 async function cover(it,sz=500){
@@ -317,10 +318,11 @@ async function cover(it,sz=500){
  return u;
 }
 async function detail(it,lg){
+ if(ovrOf(it))return{gal:[]};
  const p={generator:'search',gsrsearch:it.w||tx(it.n,'fr'),gsrlimit:4,prop:'extracts|pageimages|coordinates|langlinks',exintro:1,explaintext:1,exlimit:'max',piprop:'thumbnail',pithumbsize:1280,colimit:1,lllimit:1};
  if(lg!=='fr')p.lllang=lg;
  const ps=(await wapi('fr',p)).sort((a,b)=>a.index-b.index);
- const m=ps[0];if(!m)return{gal:[]};
+ const m=ps[0];if(!m||!nameOk(it,m.title))return{gal:[]};
  const r={title:m.title,wl:'fr',text:m.extract||'',gal:[]};
  const im=ps.find(x=>x.thumbnail);r.img=im&&im.thumbnail.source;
  const co=(m.coordinates||[])[0];if(co){r.lat=co.lat;r.lng=co.lon}
@@ -344,9 +346,9 @@ const SUBMAP={randonnee:'rando',plongee:'plongee',bivouac:'bivouac',artisanat:'a
 function fromApi(cat,x){
  const loc=x.location||{};
  return{id:'api'+cat+x._id,cat,api:1,
-  sub:cat==='c'?x.region:cat==='a'?(SUBMAP[x.category]||x.category):cat==='g'?x.type:cat==='h'?x.kind:'',
-  w:null,lat:loc.lat,lng:loc.lng,n:x.title||{},d:x.summary||{},cover:x.cover,gallery:x.gallery||[],
-  days:x.days,tr:x.transport,lg:x.lodging||[],st:'',it:x.itinerary,body:x.body,date:x.publishedAt,videos:x.videos,links:x.links,auto:x.auto,route:x.route&&x.route.start&&x.route.end?[[x.route.start.name||'',x.route.start.lat,x.route.start.lng],[x.route.end.name||'',x.route.end.lat,x.route.end.lng]]:null};
+  sub:x.sub||(cat==='c'?x.region:cat==='a'?(SUBMAP[x.category]||x.category):cat==='g'?x.type:cat==='h'||cat==='t'?x.kind:''),
+  slug:x.slug,seeded:x.seeded,reg:x.reg,when:x.when,w:x.w||null,lat:loc.lat,lng:loc.lng,n:x.title||{},d:x.summary||{},cover:x.cover,gallery:x.gallery||[],
+  days:x.days,tr:x.transport,lg:x.lodging||[],st:x.st||'',it:x.itinerary,body:x.body,date:x.publishedAt,videos:x.videos,links:x.links,auto:x.auto,route:x.route&&x.route.start&&x.route.end?[[x.route.start.name||'',x.route.start.lat,x.route.start.lng],[x.route.end.name||'',x.route.end.lat,x.route.end.lng]]:null};
 }
 async function loadApi(){
  ITEMS.splice(0,ITEMS.length,...ITEMS.filter(i=>!i.api));
@@ -359,6 +361,8 @@ async function loadApi(){
    (await r.json()).forEach(x=>ITEMS.push(fromApi((x.tags||[]).includes('event')?'e':(x.wilaya||'').toLowerCase()==='transnistrie'?'t':cat,x)));
   }catch{}
  }));
+ // les fiches importées dans la base remplacent celles codées en dur
+ if(ITEMS.some(i=>i.api&&i.seeded))ITEMS.splice(0,ITEMS.length,...ITEMS.filter(i=>i.api));
  if($('modal').hidden)render();
 }
 
@@ -440,7 +444,8 @@ function openM(it,push=true){
  m.hidden=false;m.scrollTop=0;document.body.classList.add('lock');
  // image d'en-tête : cover connue tout de suite, version large ensuite
  const setHero=u=>{if(u&&tok===mtok)setBg($('mh'),u)};
- if(it.cover)setHero(it.cover);else if(it.cvs&&it.cvs[500])setHero(it.cvs[500]);
+ const ov=ovrOf(it);
+ if(ov)setHero(ov);else if(it.cover)setHero(it.cover);else if(it.cvs&&it.cvs[500])setHero(it.cvs[500]);
  const gal=[...(it.gallery||[])];
  const showGal=g=>{
   const all=[...new Set(g)].slice(0,24);
@@ -458,7 +463,7 @@ function openM(it,push=true){
  if(it.cat==='n'||it.cat==='e')return;
  detail(it,lang).then(r=>{
   if(tok!==mtok)return;
-  if(r.img)setHero(r.img);
+  if(r.img&&!ov&&!it.cover)setHero(r.img);
   if(r.text){
    $('hx').className='';
    $('hx').innerHTML=cut(r.text,1600).split('\n').filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('')+

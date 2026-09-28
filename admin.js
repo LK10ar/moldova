@@ -54,4 +54,13 @@ $('f').onsubmit = async e => {
   if (r.ok) { $('msg').textContent = 'Enregistré'; editId = null; f.reset(); $('pv').removeAttribute('src'); load(); }
   else { let m = 'Erreur ' + r.status; try { m = (await r.json()).error || m; } catch {} $('msg').textContent = m; }
 };
+const imp = document.createElement('button'); imp.type = 'button'; imp.textContent = 'Importer les fiches existantes du site';
+imp.onclick = async () => {
+  if (!confirm('Copier dans la base toutes les fiches du site (sans doublon ni écrasement) ?')) return;
+  imp.disabled = true;
+  try { const r = await api('seed', { method: 'POST' }); const d = await r.json(); $('msg').textContent = r.ok ? d.added + ' fiche(s) importée(s)' : (d.error || 'Erreur ' + r.status); load(); }
+  catch { $('msg').textContent = 'Serveur injoignable'; }
+  imp.disabled = false;
+};
+$('app').prepend(imp);
 show();
