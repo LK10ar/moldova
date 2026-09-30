@@ -96,14 +96,169 @@ nav{min-width:0;margin-inline-start:auto}
 .pp{width:210px;max-width:100%;border-radius:8px;display:block;margin:0 0 6px}
 .lgd{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 2px 0;font:13px system-ui;color:var(--mut)}.lgd i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-inline-end:6px;vertical-align:-1px}
 
-/* --- Header vidéo --- */
-.hero{position:relative;overflow:hidden;min-height:clamp(420px,72vh,760px);display:flex;flex-direction:column;align-items:center;justify-content:center}
-.hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
-.hero::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(#0004,#0009)}
-.hero h1,.hero p{position:relative;z-index:2;max-width:900px}
-@media(max-width:820px){.hero{min-height:56vh}}
-@media(prefers-reduced-motion:reduce){.hero video{display:none}}
-</style></head><body>
+/* ================= Landing + motion 3D (ajout, rien de l'existant n'est retiré) ================= */
+:root{--gold:#e8b45a;--ff:'Playfair Display',Georgia,serif}
+#sp{position:fixed;top:0;left:0;right:0;height:3px;z-index:90;pointer-events:none;transform-origin:0 50%;transform:scaleX(var(--p,0));background:linear-gradient(90deg,#b3304f,var(--gold))}
+
+/* --- header en verre par-dessus la vidéo --- */
+header{transition:background .35s,border-color .35s}
+header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+body.on-hero header{background:transparent;border-bottom-color:transparent}
+body.on-hero header::before{background:linear-gradient(#000b,#0000)}
+body.on-hero .logo{color:#fff;text-shadow:0 2px 14px #0009}
+body.on-hero .bg{color:#fff;border-color:#fff6}
+body.on-hero select{background:#ffffff1f;color:#fff;border-color:#fff5}
+body.on-hero select option{color:#111;background:#fff}
+@media(min-width:1361px){
+ body.on-hero nav button{color:#fff;text-shadow:0 1px 10px #0009}
+ body.on-hero nav button:hover{background:#ffffff26}
+ body.on-hero nav button.on{border-color:#fff;color:#fff}
+}
+
+/* --- hero --- */
+.hero{position:relative;isolation:isolate;overflow:hidden;margin-top:calc(var(--hh,58px)*-1);padding:calc(var(--hh,58px) + 30px) 20px 28px;min-height:100vh;min-height:min(100svh,960px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;perspective:1200px}
+.hero video{position:absolute;left:0;top:-4%;width:100%;height:108%;object-fit:cover;z-index:-2;opacity:0;transition:opacity 1.2s ease;transform:translate3d(0,var(--vy,0px),0) scale(var(--vs,1.02));will-change:transform}
+.hero.vready video{opacity:1}
+.hero video.fail{display:none}
+.hero-shade{position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(120% 90% at 50% 40%,#0000 0%,#0007 75%),linear-gradient(#0005,#0007 60%,#000c)}
+.hero-in{position:relative;z-index:2;width:100%;max-width:1000px;will-change:transform,opacity;transition:transform .18s ease-out}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:8px 16px;border-radius:99px;font:600 12px/1 system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#fff;background:#ffffff1a;border:1px solid #ffffff40;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.hero h1{font-family:var(--ff);font-weight:600;font-size:clamp(40px,8.2vw,112px);line-height:1.02;letter-spacing:-.02em;margin:22px 0 16px;text-shadow:0 6px 40px #0009}
+.hero #sub{max-width:660px;margin:0 auto;font-size:clamp(16px,2vw,21px);line-height:1.5;text-shadow:0 2px 18px #000a}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:30px}
+.btn{font:600 15px/1 system-ui,sans-serif;padding:15px 26px;border-radius:99px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:transform .2s,box-shadow .2s,background .2s}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}.btn:hover svg{transform:translateX(3px)}
+.btn.pri{background:linear-gradient(135deg,#b3304f,#7a1d38);color:#fff;box-shadow:0 10px 30px #8c234066,inset 0 1px 0 #ffffff33}
+.btn.pri:hover{box-shadow:0 14px 38px #8c2340aa,inset 0 1px 0 #ffffff33}
+.btn.ghost{background:#ffffff1c;color:#fff;border-color:#ffffff55;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.btn.ghost:hover{background:#ffffff33}
+.hero-stats{list-style:none;padding:0;margin:44px auto 0;display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;width:min(820px,100%)}
+.hero-stats li{padding:16px 14px;border-radius:18px;background:#ffffff14;border:1px solid #ffffff2e;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 #ffffff26;color:#fff}
+.hero-stats b{display:block;font:600 clamp(26px,3.4vw,38px)/1 var(--ff)}
+.hero-stats span{display:block;margin-top:7px;font:12px/1.25 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;opacity:.82}
+.cue{display:block;margin:26px auto 0;width:26px;height:42px;border:2px solid #fff9;border-radius:14px;position:relative}
+.cue::after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:4px;background:#fff;animation:wheel 1.6s ease-in-out infinite}
+@keyframes wheel{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(14px)}}
+.vctl{position:absolute;right:18px;bottom:18px;z-index:3;width:44px;height:44px;border-radius:50%;background:#0008;border:1px solid #fff4;color:#fff;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .2s,background .2s}
+.vctl:hover{transform:scale(1.08);background:#000b}
+.vctl svg{width:18px;height:18px;fill:currentColor}
+.vctl .i-play{display:none}.vctl.paused .i-play{display:block}.vctl.paused .i-pause{display:none}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.hero-in>*{animation:rise .9s cubic-bezier(.22,1,.36,1) both}
+.hero-in>.eyebrow{animation-delay:.1s}.hero-in>h1{animation-delay:.22s}.hero-in>#sub{animation-delay:.36s}.hero-in>.hero-cta{animation-delay:.5s}.hero-in>.hero-stats{animation-delay:.65s}.hero-in>.cue{animation-delay:.8s}
+@media(max-width:640px){.hero-stats{grid-template-columns:repeat(2,1fr);margin-top:30px}.cue{display:none}.hero{padding-bottom:36px}}
+
+/* --- révélations au scroll --- */
+.fx .rv{opacity:0;transform:translateY(34px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
+.fx .rv.is-in{opacity:1;transform:none}
+.kicker{display:block;font:700 12px/1 system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:var(--acc);margin-bottom:20px}
+.sec-head{text-align:center;padding:0 20px}
+.sec-title{font:600 clamp(32px,5.4vw,68px)/1.05 var(--ff);letter-spacing:-.02em;margin:0}
+
+/* --- phrase qui s'allume au scroll --- */
+.statement{padding:clamp(80px,14vw,180px) 20px clamp(40px,6vw,80px);text-align:center;scroll-margin-top:60px}
+.statement p{font:500 clamp(24px,4.2vw,52px)/1.24 var(--ff);max-width:1050px;margin:0 auto;letter-spacing:-.01em}
+.statement .w{opacity:.14;display:inline-block;white-space:pre}
+
+/* --- cartes empilées 3D --- */
+.stack{padding:clamp(40px,6vw,90px) 16px 0}
+.stack-list{max-width:1180px;margin:34px auto 0}
+.stack-item{height:88vh;min-height:520px}
+.stack-item:last-child{height:auto}
+.stack-card{--i:0;--sc:1;--br:1;position:sticky;top:calc(var(--hh,58px) + 14px + var(--i)*20px);height:min(76vh,640px);min-height:440px;border-radius:32px;overflow:hidden;background:var(--g,#333) center/cover;color:#fff;transform-origin:50% 0;transform:scale(var(--sc));filter:brightness(var(--br));box-shadow:0 30px 70px #0006;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(22px,4vw,48px);isolation:isolate;will-change:transform}
+.stack-card::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#0000 30%,#000d),linear-gradient(90deg,#000a,#0000 70%)}
+.stack-num{position:absolute;top:clamp(18px,3vw,36px);left:clamp(22px,4vw,48px);font:600 clamp(48px,9vw,120px)/1 var(--ff);opacity:.92;text-shadow:0 8px 30px #0006}
+.stack-tag{position:absolute;top:clamp(22px,3.4vw,42px);right:clamp(22px,4vw,48px);padding:8px 14px;border-radius:99px;background:#ffffff1f;border:1px solid #ffffff44;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:600 12px/1 system-ui,sans-serif;letter-spacing:.04em}
+.stack-card h3{font:600 clamp(30px,5vw,64px)/1.03 var(--ff);margin:0 0 10px;letter-spacing:-.01em}
+.stack-card p{max-width:560px;margin:0 0 22px;font:16px/1.5 system-ui,sans-serif;opacity:.94}
+
+/* --- galerie défilante en perspective --- */
+.band{padding:clamp(56px,8vw,110px) 0;overflow:hidden;perspective:1600px}
+.band .sec-head{margin-bottom:40px}
+.mq-rows{display:grid;gap:16px;transform:rotateX(9deg) rotateZ(-1.5deg) scale(1.04);transform-style:preserve-3d}
+.mq-row{display:flex;gap:16px;width:max-content;will-change:transform}
+.mq-tile{position:relative;flex:0 0 auto;width:clamp(230px,24vw,360px);aspect-ratio:3/2;border-radius:22px;overflow:hidden;background:var(--line) center/cover;cursor:pointer;box-shadow:0 18px 44px #0004;transition:transform .35s,filter .35s;outline-offset:3px}
+.mq-tile:hover,.mq-tile:focus-visible{transform:translateY(-6px) scale(1.03)}
+.mq-tile b{position:absolute;left:0;right:0;bottom:0;padding:38px 16px 14px;color:#fff;font:600 15px/1.2 system-ui,sans-serif;background:linear-gradient(#0000,#000b)}
+
+/* --- globe --- */
+.earth{position:relative;overflow:hidden;isolation:isolate;background:#050510;color:#fff;padding:clamp(70px,10vw,140px) 20px clamp(90px,12vw,170px)}
+.earth::before{content:"";position:absolute;inset:0;z-index:-1;background-image:radial-gradient(1px 1px at 20px 30px,rgba(255,255,255,.8),transparent),radial-gradient(1px 1px at 140px 70px,rgba(255,255,255,.9),transparent),radial-gradient(1.5px 1.5px at 90px 140px,rgba(255,255,255,.7),transparent),radial-gradient(2px 2px at 160px 220px,rgba(255,255,255,.6),transparent),radial-gradient(1px 1px at 320px 40px,rgba(255,255,255,.8),transparent);background-size:400px 400px}
+.earth::after{content:"";position:absolute;left:0;right:0;bottom:0;height:140px;z-index:-1;background:linear-gradient(#0000,var(--bg))}
+.earth-in{max-width:1180px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,5vw,72px);align-items:center}
+.earth-in.nog{grid-template-columns:1fr;max-width:760px;text-align:center}
+.earth .kicker{color:#8fd6ff}
+.earth h2{font:600 clamp(32px,5vw,64px)/1.05 var(--ff);letter-spacing:-.02em;margin:0 0 18px}
+.earth p{font:17px/1.6 system-ui,sans-serif;color:#b0b0c0;margin:0 0 26px;max-width:520px}
+.earth-in.nog p{margin-inline:auto}
+.facts2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fact{padding:14px 16px;border-radius:14px;background:#ffffff08;border:1px solid #ffffff1a;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);text-align:left}
+.fact b{display:block;margin-bottom:5px;font:600 11px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8fd6ff}
+.fact span{font:15px/1.35 system-ui,sans-serif;color:#eef}
+.globe{position:relative;aspect-ratio:1;width:min(100%,560px);margin:auto}
+.globe canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:pan-y}
+.globe canvas:active{cursor:grabbing}
+.g-tag{position:absolute;left:0;top:0;pointer-events:none;padding:6px 12px 6px 10px;border-radius:99px;background:#000a;border:1px solid #ffffff44;font:600 13px/1 system-ui,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.g-tag.on{opacity:1}
+.g-hint{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);font:12px/1 system-ui,sans-serif;letter-spacing:.06em;opacity:.6;white-space:nowrap}
+@media(max-width:860px){.earth-in{grid-template-columns:1fr}.globe{order:-1;width:min(88vw,460px)}.earth p{max-width:none}}
+
+/* --- catalogue --- */
+.cat-head{max-width:1180px;margin:0 auto;padding:clamp(56px,8vw,100px) 16px 0;text-align:center}
+
+/* --- cartes du catalogue en 3D --- */
+.card{position:relative;transform-style:preserve-3d;--rx:0deg;--ry:0deg}
+.grid .card:hover,.grid .card:focus-visible{transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-6px);box-shadow:0 22px 44px #0007}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(260px circle at var(--gx,50%) var(--gy,0%),#ffffff2e,#0000 60%)}
+.card:hover::after{opacity:1}
+.card .ph{transition:transform .7s cubic-bezier(.22,1,.36,1)}
+.card:hover .ph{transform:scale(1.07)}
+@keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(.96)}to{opacity:1;transform:none}}
+@supports(animation-timeline:view()){.grid .card{animation:cardIn linear backwards;animation-timeline:view();animation-range:entry 0% entry 55%}}
+
+/* --- footer --- */
+footer.sf{margin:0;padding:0;border:0;background:#050403;color:#fff;font:inherit;position:relative;overflow:hidden;isolation:isolate}
+.sf::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(60% 50% at 50% 0%,#8c234055,#0000 70%),radial-gradient(40% 40% at 92% 100%,#2f5d3a40,#0000 70%)}
+.sf-dots{position:relative;height:110px;overflow:hidden}
+.sf-dots__line{position:absolute;left:0;top:50%;width:200%;height:64px;opacity:.8;transform:translateY(-50%);background-image:radial-gradient(circle,rgb(232 180 90/.6) 1.5px,transparent 2px),radial-gradient(circle,rgb(255 255 255/.35) 1px,transparent 1.5px),radial-gradient(circle,rgb(255 255 255/.45) 1.2px,transparent 1.8px);background-position:0 8px,24px 22px,48px 14px;background-size:72px 38px,110px 44px,160px 52px;animation:sfDots 18s linear infinite}
+@keyframes sfDots{from{transform:translate3d(0,-50%,0)}to{transform:translate3d(-50%,-50%,0)}}
+.sf-inner{width:min(100% - 96px,1820px);margin:0 auto;padding:clamp(34px,4vw,66px) 0 clamp(18px,2vw,34px)}
+.sf-top{display:grid;grid-template-columns:minmax(300px,1.4fr) repeat(3,minmax(150px,.5fr));gap:clamp(28px,4vw,76px);min-height:clamp(220px,22vw,320px)}
+.sf-h{font:400 clamp(28px,3.3vw,56px)/1.1 var(--ff);letter-spacing:-.01em;max-width:680px;margin:0;color:#fff}
+.sf-col h3{font:600 11px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#ffffff80;margin:0 0 20px}
+.sf-col a,.sf-col button{display:block;background:none;border:0;padding:0;margin:0 0 clamp(12px,1.2vw,18px);color:#ffffffe0;font:600 16px/1.15 system-ui,sans-serif;cursor:pointer;text-align:left;text-decoration:none;transition:color .18s,transform .18s}
+.sf-col a:hover,.sf-col button:hover{color:#fff;transform:translateX(4px)}
+.sf-brand{display:flex;align-items:center;margin-top:clamp(18px,3vw,46px)}
+.sf-mark{position:relative;flex:0 0 clamp(52px,6vw,110px);aspect-ratio:1;margin-right:clamp(12px,1.6vw,26px);overflow:hidden;border-radius:50%;background:#fff}
+.sf-mark::before{content:"";position:absolute;inset:-18%;background:#8c2340;clip-path:polygon(0 20%,100% 8%,100% 19%,0 31%,0 43%,100% 31%,100% 42%,0 54%,0 66%,100% 54%,100% 65%,0 77%)}
+.sf-word{display:block;flex:1 1 auto;min-width:0;font:600 100px/.8 var(--ff);letter-spacing:-.045em;white-space:nowrap;color:#fff}
+.sf .sf-legal .in{max-width:none;margin:clamp(14px,1.4vw,24px) 0 0;display:flex;flex-wrap:wrap;gap:8px 18px;font:11px/1.35 system-ui,sans-serif;color:#ffffff85}
+.sf .sf-legal a{color:inherit;text-decoration:none}
+.sf .sf-legal a:hover{color:#fff;text-decoration:underline}
+@media(max-width:980px){.sf-inner{width:min(100% - 48px,1820px)}.sf-top{grid-template-columns:1fr 1fr}.sf-h{grid-column:1/-1}}
+@media(max-width:560px){.sf-inner{width:min(100% - 32px,1820px)}.sf-top{grid-template-columns:1fr;min-height:0}.sf-col a,.sf-col button{font-size:15px}.sf-mark{flex-basis:clamp(38px,12vw,58px)}}
+
+/* --- bouton haut de page avec anneau de progression --- */
+#top{width:54px;height:54px;background:#0b0806cc;color:#fff;border:1px solid #ffffff26;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 30px #0008,inset 0 1px 0 #ffffff1f;display:grid;place-items:center;padding:0;transition:opacity .25s,transform .25s,box-shadow .25s}
+#top.show:hover{transform:translateY(-3px) scale(1.06);box-shadow:0 16px 38px #000a,0 0 0 4px #b3304f33}
+#top:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#top .ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+#top .ring circle{fill:none;stroke-width:2.5}
+#top .trk{stroke:#ffffff22}
+#top .pbar{stroke:var(--gold);stroke-linecap:round;stroke-dasharray:131.95;stroke-dashoffset:calc(131.95 * (1 - var(--pr,0)))}
+#top .arw{position:relative;width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
+#top:hover .arw{transform:translateY(-3px)}
+
+@media(prefers-reduced-motion:reduce){
+ .hero-in>*{animation:none}.cue::after{animation:none}.sf-dots__line{animation:none}
+ .fx .rv{opacity:1;transform:none;transition:none}
+ .mq-rows{transform:none}.grid .card{animation:none!important}
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+</head><body class="on-hero">
 <header><div class="bar">
 <a class="logo" href="./">Moldova Explorer</a>
 <nav id="nav"></nav>
@@ -111,9 +266,82 @@ nav{min-width:0;margin-inline-start:auto}
 <button class="bg" id="bg" aria-label="Menu" aria-expanded="false">☰</button>
 </div></header>
 <div id="scrim"></div>
-<section class="hero"><video id="hv" autoplay muted loop playsinline preload="auto" aria-hidden="true"><source src="assets/header.webm" type="video/webm"><source src="assets/header.mp4" type="video/mp4"></video><h1 id="h1"></h1><p id="sub"></p></section>
+<div id="sp" aria-hidden="true"></div>
+<section class="hero" id="hero">
+<video id="hv" autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true" tabindex="-1">
+<source src="assets/header.mp4" type="video/mp4">
+<source src="header.mp4" type="video/mp4">
+<source src="assets/header.webm" type="video/webm">
+</video>
+<div class="hero-shade"></div>
+<div class="hero-in" id="hin">
+<span class="eyebrow"><i></i><span data-fx="eye"></span></span>
+<h1 id="h1"></h1>
+<p id="sub"></p>
+<div class="hero-cta">
+<button class="btn pri" data-tab="0" type="button"><span data-fx="c1"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+<button class="btn ghost" data-tab="7" type="button"><span data-fx="c2"></span></button>
+</div>
+<ul class="hero-stats" id="hStats">
+<li><b data-n="0">0</b><span data-fx="st0"></span></li>
+<li><b data-n="1">0</b><span data-fx="st1"></span></li>
+<li><b data-n="2">0</b><span data-fx="st2"></span></li>
+<li><b data-n="3">0</b><span data-fx="st3"></span></li>
+</ul>
+<a class="cue" href="#intro" data-fxa="aria-label:cue"></a>
+</div>
+<button class="vctl" id="vctl" type="button" hidden aria-label="Pause"><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+</section>
+
+<section class="statement rv" id="intro"><span class="kicker" data-fx="kSt"></span><p id="stText"></p></section>
+
+<section class="stack" id="stack">
+<div class="sec-head rv"><span class="kicker" data-fx="kStack"></span><h2 class="sec-title" data-fx="tStack"></h2></div>
+<div class="stack-list" id="stackList">
+<div class="stack-item"><article class="stack-card" data-k="c" style="--i:0;--g:linear-gradient(135deg,#2f5d3a,#14301f)"><span class="stack-num">01</span><span class="stack-tag" data-count="0"></span><h3 data-fx="s0t"></h3><p data-fx="s0d"></p><div><button class="btn pri" data-tab="0" type="button"><span data-fx="sBtn"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div></article></div>
+<div class="stack-item"><article class="stack-card" data-k="g" style="--i:1;--g:linear-gradient(135deg,#8c2340,#3a0f1c)"><span class="stack-num">02</span><span class="stack-tag" data-count="2"></span><h3 data-fx="s1t"></h3><p data-fx="s1d"></p><div><button class="btn pri" data-tab="2" type="button"><span data-fx="sBtn"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div></article></div>
+<div class="stack-item"><article class="stack-card" data-k="h" style="--i:2;--g:linear-gradient(135deg,#8a5a00,#3b2600)"><span class="stack-num">03</span><span class="stack-tag" data-count="3"></span><h3 data-fx="s2t"></h3><p data-fx="s2d"></p><div><button class="btn pri" data-tab="3" type="button"><span data-fx="sBtn"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div></article></div>
+<div class="stack-item"><article class="stack-card" data-k="t" style="--i:3;--g:linear-gradient(135deg,#1d4f9c,#0d2450)"><span class="stack-num">04</span><span class="stack-tag" data-count="4"></span><h3 data-fx="s3t"></h3><p data-fx="s3d"></p><div><button class="btn pri" data-tab="4" type="button"><span data-fx="sBtn"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div></article></div>
+</div>
+</section>
+
+<section class="band" id="band" hidden>
+<div class="sec-head rv"><span class="kicker" data-fx="kGal"></span><h2 class="sec-title" data-fx="tGal"></h2></div>
+<div class="mq-rows" id="mqRows"><div class="mq-row"></div><div class="mq-row"></div></div>
+</section>
+
+<section class="earth" id="earth">
+<div class="earth-in" id="earthIn">
+<div class="rv">
+<span class="kicker" data-fx="kEarth"></span>
+<h2 data-fx="tEarth"></h2>
+<p data-fx="dEarth"></p>
+<div class="facts2">
+<div class="fact"><b data-fx="f0l"></b><span data-fx="f0v"></span></div>
+<div class="fact"><b data-fx="f1l"></b><span data-fx="f1v"></span></div>
+<div class="fact"><b data-fx="f2l"></b><span data-fx="f2v"></span></div>
+<div class="fact"><b data-fx="f3l"></b><span data-fx="f3v"></span></div>
+</div>
+</div>
+<div class="globe" id="globe"><canvas id="gc" role="img" data-fxa="aria-label:tEarth"></canvas><span class="g-tag" id="gTag"></span><span class="g-hint" data-fx="drag"></span></div>
+</div>
+</section>
+
+<div class="cat-head rv" id="catHead"><span class="kicker" data-fx="kCat"></span><h2 class="sec-title" data-fx="tCat"></h2></div>
 <main><div id="view"></div></main>
-<footer><div class="in" id="foot"></div></footer>
+<footer class="sf" id="sf">
+<div class="sf-dots" aria-hidden="true"><div class="sf-dots__line"></div></div>
+<div class="sf-inner">
+<div class="sf-top">
+<h2 class="sf-h" data-fx="fH"></h2>
+<div class="sf-col" role="navigation" data-fxa="aria-label:fExp"><h3 data-fx="fExp"></h3><div id="sfC1"></div></div>
+<div class="sf-col" role="navigation" data-fxa="aria-label:fMore"><h3 data-fx="fMore"></h3><div id="sfC2"></div></div>
+<div class="sf-col"><h3 data-fx="fRes"></h3><div id="sfC3"></div></div>
+</div>
+<div class="sf-brand"><span class="sf-mark" aria-hidden="true"></span><span class="sf-word" id="sfW">Moldova Explorer</span></div>
+<div class="sf-legal"><div class="in" id="foot"></div></div>
+</div>
+</footer>
 <button id="top" aria-label="Haut de page">↑</button>
 <div id="modal" hidden><button class="x" aria-label="Fermer">✕</button><div class="sheet" id="sheet"></div></div>
 <div id="lb" class="lb" hidden><button class="lbn" data-d="-1" style="left:10px">‹</button><img alt=""><button class="lbn" data-d="1" style="right:10px">›</button></div>
@@ -378,6 +606,7 @@ function render(){
  const t=T[lang],h=document.documentElement;
  h.lang=lang;h.dir='ltr';
  $('lang').value=lang;$('h1').textContent=t.h1;$('sub').textContent=t.sub;
+ window.mdFX&&window.mdFX.update();
  $('bg').setAttribute('aria-label',t.menu);$('top').setAttribute('aria-label',t.top);document.querySelector('.x').setAttribute('aria-label',t.close);
  $('nav').innerHTML=t.nav.map((n,i)=>`<button class="${i===tab?'on':''}" data-tab="${i}">${esc(n)}</button>`).join('');
  const ids=['mentions','cgu','confidentialite','securite'];
@@ -578,16 +807,476 @@ window.addEventListener('resize',()=>{if(innerWidth>1360)closeNav()});
 render();
 cover({id:'hero',w:"Orheiul Vechi",n:{fr:'Orheiul Vechi'}},1920).then(u=>{if(u)document.querySelector('.hero').style.setProperty('--hero',`url("${u}")`)});
 loadApi();
+window.__md={ITEMS,cover,tx,byId,T,lang:()=>lang};
 })();
 </script>
 <script>
-/* Header vidéo : si aucun fichier n'est trouvé, on retire la balise et la photo de fond reste affichée */
-(()=>{const v=document.getElementById('hv');if(!v)return;
-const drop=()=>v.remove();
-v.querySelectorAll('source').forEach(s=>s.addEventListener('error',()=>{if(!v.querySelector('source:not([data-bad])'))drop();s.dataset.bad=1;if(![...v.querySelectorAll('source')].some(x=>!x.dataset.bad))drop()}));
-v.addEventListener('error',drop);
-if(matchMedia('(prefers-reduced-motion: reduce)').matches){v.pause();return}
-const p=v.play();if(p&&p.catch)p.catch(()=>{});
-document.addEventListener('visibilitychange',()=>{document.hidden?v.pause():v.play().catch(()=>{})});
+/* Moldova Explorer : landing + motion 3D. Lit les données du site via window.__md (rien n'est dupliqué). */
+(()=>{
+const root=document.documentElement;
+root.classList.add('fx');
+const $=id=>document.getElementById(id);
+const md=()=>window.__md;
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const nrm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const safe=f=>(...a)=>{try{return f(...a)}catch(e){console.warn('[fx]',e)}};
+
+/* ---------- textes (5 langues) ---------- */
+const FX={
+fr:{eye:'Guide de voyage · Moldavie',c1:'Explorer les circuits',c2:'Voir la carte',st0:'Circuits',st1:'Activités',st2:'Domaines & caves',st3:'Sites & monastères',cue:'Défiler vers le bas',vpause:'Mettre la vidéo en pause',vplay:'Lire la vidéo',
+kSt:'La Moldavie',st:"Des caves creusées sous terre sur des kilomètres, des monastères taillés dans la falaise, des forteresses au bord du Dniestr : la Moldavie se découvre à son rythme, verre à la main.",
+kStack:'Par où commencer ?',tStack:'Quatre façons de découvrir le pays',
+s0t:'Circuits clé en main',s0d:"Itinéraires de 2 à 3 jours à travers le centre, le nord, le sud et la Gagaouzie.",
+s1t:'Vin & gastronomie',s1d:"Caves souterraines, domaines des Codri, mămăligă et plăcinte : la Moldavie se déguste.",
+s2t:'Histoire & culture',s2d:"Orheiul Vechi, Soroca, Țipova, Căpriana : des monastères rupestres aux forteresses du Dniestr.",
+s3t:'Transnistrie',s3d:"Bender, Tiraspol, Chițcani : héritage soviétique et forteresse ottomane. Passeport requis au poste de contrôle.",
+sBtn:'Explorer',entries:'fiches',
+kGal:'Aperçu',tGal:'Un pays en images',
+kEarth:'Sur la carte du monde',tEarth:"Au cœur de l'Europe de l'Est",dEarth:"Entre la Roumanie et l'Ukraine, la Moldavie se traverse en une journée et se savoure en une semaine. Fais tourner le globe pour la retrouver.",
+f0l:'Capitale',f0v:'Chișinău',f1l:'Monnaie',f1v:'Leu moldave (MDL)',f2l:'Langue',f2v:'Roumain (le russe est très répandu)',f3l:'Fuseau horaire',f3v:'UTC+2 (UTC+3 en été)',drag:'Glisse pour tourner le globe',tag:'Moldavie',
+kCat:'Le catalogue',tCat:'Tout explorer',
+fH:'Vins, monastères et petites routes : la Moldavie vous attend.',fExp:'Explorer',fMore:'Plus',fRes:'Ressources',fPdf:'Carte des routes du vin (PDF)',fTop:'Haut de page'},
+en:{eye:'Travel guide · Moldova',c1:'Explore the tours',c2:'View the map',st0:'Tours',st1:'Activities',st2:'Wineries & cellars',st3:'Sites & monasteries',cue:'Scroll down',vpause:'Pause video',vplay:'Play video',
+kSt:'Moldova',st:"Cellars carved for miles underground, monasteries cut into cliffs, fortresses on the Dniester: Moldova is best discovered slowly, glass in hand.",
+kStack:'Where to start?',tStack:'Four ways to discover the country',
+s0t:'Ready-made tours',s0d:"2- to 3-day routes across the centre, north, south and Gagauzia.",
+s1t:'Wine & food',s1d:"Underground cellars, Codru estates, mămăligă and plăcinte: Moldova is meant to be tasted.",
+s2t:'History & culture',s2d:"Orheiul Vechi, Soroca, Țipova, Căpriana: from cave monasteries to Dniester fortresses.",
+s3t:'Transnistria',s3d:"Bender, Tiraspol, Chițcani: Soviet heritage and an Ottoman fortress. Bring your passport for the checkpoint.",
+sBtn:'Explore',entries:'listings',
+kGal:'Preview',tGal:'A country in pictures',
+kEarth:'On the world map',tEarth:'In the heart of Eastern Europe',dEarth:"Set between Romania and Ukraine, Moldova can be crossed in a day and savoured over a week. Spin the globe to find it again.",
+f0l:'Capital',f0v:'Chișinău',f1l:'Currency',f1v:'Moldovan leu (MDL)',f2l:'Language',f2v:'Romanian (Russian widely spoken)',f3l:'Time zone',f3v:'UTC+2 (UTC+3 in summer)',drag:'Drag to spin the globe',tag:'Moldova',
+kCat:'The catalogue',tCat:'Explore everything',
+fH:'Wine, monasteries and back roads: Moldova is waiting.',fExp:'Explore',fMore:'More',fRes:'Resources',fPdf:'Wine routes map (PDF)',fTop:'Back to top'},
+es:{eye:'Guía de viaje · Moldavia',c1:'Explorar los circuitos',c2:'Ver el mapa',st0:'Circuitos',st1:'Actividades',st2:'Bodegas y fincas',st3:'Sitios y monasterios',cue:'Desplazar hacia abajo',vpause:'Pausar el vídeo',vplay:'Reproducir el vídeo',
+kSt:'Moldavia',st:"Bodegas excavadas a lo largo de kilómetros, monasterios tallados en el acantilado, fortalezas junto al Dniéster: Moldavia se descubre despacio, con una copa en la mano.",
+kStack:'¿Por dónde empezar?',tStack:'Cuatro formas de descubrir el país',
+s0t:'Circuitos organizados',s0d:"Rutas de 2 a 3 días por el centro, el norte, el sur y Gagauzia.",
+s1t:'Vino y gastronomía',s1d:"Bodegas subterráneas, fincas del Codru, mămăligă y plăcinte: Moldavia se saborea.",
+s2t:'Historia y cultura',s2d:"Orheiul Vechi, Soroca, Țipova, Căpriana: de monasterios rupestres a fortalezas del Dniéster.",
+s3t:'Transnistria',s3d:"Bender, Tiraspol, Chițcani: herencia soviética y fortaleza otomana. Lleve el pasaporte al control.",
+sBtn:'Explorar',entries:'fichas',
+kGal:'Vista previa',tGal:'Un país en imágenes',
+kEarth:'En el mapa del mundo',tEarth:'En el corazón de Europa del Este',dEarth:"Entre Rumanía y Ucrania, Moldavia se cruza en un día y se saborea en una semana. Gira el globo para volver a encontrarla.",
+f0l:'Capital',f0v:'Chișinău',f1l:'Moneda',f1v:'Leu moldavo (MDL)',f2l:'Idioma',f2v:'Rumano (el ruso está muy extendido)',f3l:'Huso horario',f3v:'UTC+2 (UTC+3 en verano)',drag:'Arrastra para girar el globo',tag:'Moldavia',
+kCat:'El catálogo',tCat:'Explorarlo todo',
+fH:'Vino, monasterios y caminos secundarios: Moldavia te espera.',fExp:'Explorar',fMore:'Más',fRes:'Recursos',fPdf:'Mapa de rutas del vino (PDF)',fTop:'Subir'},
+ro:{eye:'Ghid de călătorie · Moldova',c1:'Explorează circuitele',c2:'Vezi harta',st0:'Circuite',st1:'Activități',st2:'Domenii și crame',st3:'Situri și mănăstiri',cue:'Derulează în jos',vpause:'Pune videoclipul pe pauză',vplay:'Redă videoclipul',
+kSt:'Moldova',st:"Crame săpate kilometri sub pământ, mănăstiri tăiate în stâncă, cetăți pe malul Nistrului: Moldova se descoperă în ritmul tău, cu paharul în mână.",
+kStack:'De unde începem?',tStack:'Patru moduri de a descoperi țara',
+s0t:'Circuite gata făcute',s0d:"Trasee de 2–3 zile prin centru, nord, sud și Găgăuzia.",
+s1t:'Vin și gastronomie',s1d:"Crame subterane, domenii din Codru, mămăligă și plăcinte: Moldova se degustă.",
+s2t:'Istorie și cultură',s2d:"Orheiul Vechi, Soroca, Țipova, Căpriana: de la mănăstiri rupestre la cetăți de pe Nistru.",
+s3t:'Transnistria',s3d:"Bender, Tiraspol, Chițcani: moștenire sovietică și cetate otomană. Ia pașaportul pentru punctul de control.",
+sBtn:'Explorează',entries:'fișe',
+kGal:'Previzualizare',tGal:'O țară în imagini',
+kEarth:'Pe harta lumii',tEarth:'În inima Europei de Est',dEarth:"Între România și Ucraina, Moldova se traversează într-o zi și se savurează într-o săptămână. Rotește globul ca s-o regăsești.",
+f0l:'Capitala',f0v:'Chișinău',f1l:'Monedă',f1v:'Leu moldovenesc (MDL)',f2l:'Limba',f2v:'Româna (rusa e larg vorbită)',f3l:'Fus orar',f3v:'UTC+2 (UTC+3 vara)',drag:'Trage pentru a roti globul',tag:'Moldova',
+kCat:'Catalogul',tCat:'Explorează tot',
+fH:'Vin, mănăstiri și drumuri de țară: Moldova te așteaptă.',fExp:'Explorează',fMore:'Mai mult',fRes:'Resurse',fPdf:'Harta drumurilor vinului (PDF)',fTop:'Sus'},
+ru:{eye:'Путеводитель · Молдова',c1:'Смотреть туры',c2:'Открыть карту',st0:'Туры',st1:'Активности',st2:'Винодельни и погреба',st3:'Места и монастыри',cue:'Прокрутить вниз',vpause:'Поставить видео на паузу',vplay:'Воспроизвести видео',
+kSt:'Молдова',st:"Подземные погреба на километры, монастыри в скалах, крепости на Днестре: Молдову лучше открывать не спеша, с бокалом в руке.",
+kStack:'С чего начать?',tStack:'Четыре способа открыть страну',
+s0t:'Готовые туры',s0d:"Маршруты на 2–3 дня по центру, северу, югу и Гагаузии.",
+s1t:'Вино и кухня',s1d:"Подземные погреба, поместья Кодр, мамалыга и плацинды: Молдову нужно пробовать.",
+s2t:'История и культура',s2d:"Старый Орхей, Сорока, Ципова, Каприяна: от пещерных монастырей до крепостей на Днестре.",
+s3t:'Приднестровье',s3d:"Бендеры, Тирасполь, Кицканы: советское наследие и османская крепость. Возьмите паспорт для контрольного поста.",
+sBtn:'Смотреть',entries:'мест',
+kGal:'Превью',tGal:'Страна в кадрах',
+kEarth:'На карте мира',tEarth:'В сердце Восточной Европы',dEarth:"Между Румынией и Украиной: Молдову можно пересечь за день, а насладиться ею — за неделю. Покрутите глобус, чтобы найти её снова.",
+f0l:'Столица',f0v:'Кишинёв',f1l:'Валюта',f1v:'Молдавский лей (MDL)',f2l:'Язык',f2v:'Румынский (русский широко распространён)',f3l:'Часовой пояс',f3v:'UTC+2 (летом UTC+3)',drag:'Потяните, чтобы повернуть глобус',tag:'Молдова',
+kCat:'Каталог',tCat:'Всё в одном месте',
+fH:'Вино, монастыри и просёлочные дороги: Молдова ждёт вас.',fExp:'Открыть',fMore:'Ещё',fRes:'Ресурсы',fPdf:'Карта винных маршрутов (PDF)',fTop:'Наверх'}
+};
+const F=()=>FX[md().lang()]||FX.en;
+
+/* ---------- texte + langue ---------- */
+let curLang=null;
+function buildStatement(){
+  const p=$('stText');if(!p)return;
+  const words=F().st.split(' ');
+  p.innerHTML='';
+  words.forEach((w,i)=>{const s=document.createElement('span');s.className='w';s.textContent=w+(i<words.length-1?' ':'');p.append(s)});
+  wordEls=[...p.children];
+}
+let wordEls=[];
+function applyText(){
+  const f=F();
+  document.querySelectorAll('[data-fx]').forEach(e=>{const v=f[e.dataset.fx];if(v!=null)e.textContent=v});
+  document.querySelectorAll('[data-fxa]').forEach(e=>{const [a,k]=e.dataset.fxa.split(':');if(f[k]!=null)e.setAttribute(a,f[k])});
+  buildStatement();syncVideoBtn();footerNav();captions();
+  const tg=$('gTag');if(tg)tg.textContent=f.tag;
+  counts();tick();
+}
+
+/* ---------- compteurs (données réelles du site : ajoute une fiche dans l'admin, ça monte) ---------- */
+const cnt=()=>{const I=md().ITEMS;return[
+  I.filter(i=>i.cat==='c').length,
+  I.filter(i=>i.cat==='a').length,
+  I.filter(i=>i.cat==='g'&&i.sub==='vin').length,
+  I.filter(i=>i.cat==='h'||i.cat==='t').length]};
+const shown=[0,0,0,0];
+function animateNum(el,k,to){
+  const from=shown[k];shown[k]=to;
+  if(RM||from===to){el.textContent=to;return}
+  const t0=performance.now(),d=1100;
+  const step=t=>{const p=clamp((t-t0)/d),e=1-Math.pow(1-p,3);el.textContent=Math.round(lerp(from,to,e));if(p<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step);
+}
+function counts(){
+  const c=cnt();
+  document.querySelectorAll('#hStats b').forEach(b=>{const k=+b.dataset.n;if(shown[k]!==c[k])animateNum(b,k,c[k])});
+  const I=md().ITEMS,f=F();
+  document.querySelectorAll('.stack-tag').forEach(t=>{
+    const cat=['c','a','g','h','t'][+t.dataset.count]||'';
+    const map={0:'c',2:'g',3:'h',4:'t'};
+    const n=I.filter(i=>i.cat===map[+t.dataset.count]).length;
+    t.textContent=n+' '+f.entries;
+  });
+}
+
+/* ---------- vidéo du header ---------- */
+let userPaused=false;
+function syncVideoBtn(){
+  const v=$('hv'),b=$('vctl');if(!v||!b)return;
+  b.classList.toggle('paused',v.paused);
+  b.setAttribute('aria-label',v.paused?F().vplay:F().vpause);
+}
+function initVideo(){
+  const v=$('hv'),hero=$('hero'),btn=$('vctl');if(!v)return;
+  const srcs=[...v.querySelectorAll('source')],last=srcs[srcs.length-1];
+  const fail=()=>{v.classList.add('fail');btn.hidden=true};
+  last.addEventListener('error',fail);
+  v.addEventListener('error',fail);
+  v.addEventListener('loadeddata',()=>{hero.classList.add('vready');btn.hidden=false;if(RM&&!v.paused){v.pause();userPaused=true}syncVideoBtn()});
+  v.addEventListener('play',syncVideoBtn);v.addEventListener('pause',syncVideoBtn);
+  v.muted=true;
+  if(RM){v.removeAttribute('autoplay');v.pause();userPaused=true}
+  btn.addEventListener('click',()=>{if(v.paused){userPaused=false;v.play().catch(()=>{})}else{userPaused=true;v.pause()}});
+  new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){if(!userPaused)v.play().catch(()=>{})}else v.pause();
+  }),{threshold:.05}).observe(hero);
+  // si la lecture n'a pas démarré (économie d'énergie...), on réessaie au premier geste
+  const kick=()=>{if(!userPaused&&v.paused&&!v.classList.contains('fail'))v.play().catch(()=>{})};
+  addEventListener('pointerdown',kick,{once:true,passive:true});
+  addEventListener('scroll',kick,{once:true,passive:true});
+}
+
+/* ---------- choix des photos (indépendant des ids : marche avec les fiches du back-office) ---------- */
+const nameOf=i=>nrm((i.n&&(i.n.fr||i.n.en))||i.w||'');
+const isPlace=i=>i.cat!=='n'&&i.cat!=='e'&&!(i.cat==='g'&&i.sub==='plat');
+const KEYS=['orheiul','soroca','cricova','milestii','bender','tiraspol','hancu','tipova','capriana','saharna','curchi','purcari','vartely','mimi','prut','cahul','codrii','morilor','eiffel','colinele','chisinau','noul neamt','kvint','asconi','comrat'];
+function pickMarquee(){
+  const I=md().ITEMS,out=[],seen=new Set();
+  const add=i=>{if(i&&!seen.has(i.id)&&out.length<24){seen.add(i.id);out.push(i)}};
+  I.filter(i=>i.cover&&isPlace(i)).slice(0,8).forEach(add);        // photos ajoutées depuis l'admin
+  KEYS.forEach(k=>add(I.find(i=>isPlace(i)&&nameOf(i).includes(k))));
+  I.filter(i=>['c','a','g','h','t'].includes(i.cat)&&isPlace(i)).forEach(add);
+  return out;
+}
+function pickFor(k){
+  const I=md().ITEMS;
+  const by=(cat,keys)=>{for(const key of keys){const r=I.find(i=>i.cat===cat&&nameOf(i).includes(key));if(r)return r}return I.find(i=>i.cat===cat)};
+  if(k==='c')return by('c',['codru','chisinau']);
+  if(k==='g')return by('a',['milestii','cricova'])||by('g',['milestii','cricova']);
+  if(k==='h')return by('h',['orheiul','soroca']);
+  if(k==='t')return by('t',['bender','tiraspol']);
+}
+const setBg=(el,u,cls)=>{if(!u)return;const im=new Image();im.onload=()=>{el.style.backgroundImage='url("'+u.replace(/"/g,'%22')+'")';if(cls)el.classList.add(cls)};im.src=u};
+
+/* ---------- galerie défilante ---------- */
+let mqTok=0,rows=[];
+async function buildMarquee(){
+  const tok=++mqTok,items=pickMarquee(),res=[];
+  for(let k=0;k<items.length&&res.length<16;k+=6){
+    const chunk=items.slice(k,k+6);
+    const urls=await Promise.all(chunk.map(i=>md().cover(i).catch(()=>null)));
+    if(tok!==mqTok)return;
+    chunk.forEach((it,j)=>{if(urls[j])res.push({it,u:urls[j]})});
+  }
+  const band=$('band');
+  if(res.length<4){band.hidden=true;return}
+  band.hidden=false;
+  const rowEls=[...band.querySelectorAll('.mq-row')];
+  const lists=[res.filter((_,i)=>i%2===0),res.filter((_,i)=>i%2===1)];
+  rows=rowEls.map((row,ri)=>{
+    const list=lists[ri].length>=3?lists[ri]:res;
+    row.innerHTML='';
+    const mk=()=>{const fr=document.createDocumentFragment();list.forEach(({it,u})=>{
+      const d=document.createElement('div');d.className='mq-tile';d.dataset.open=it.id;d.dataset.id=it.id;d.tabIndex=0;d.setAttribute('role','button');
+      d.style.backgroundImage='url("'+u.replace(/"/g,'%22')+'")';
+      const b=document.createElement('b');b.textContent=md().tx(it.n);d.append(b);fr.append(d)});return fr};
+    row.append(mk());row.append(mk());
+    row._len=list.length;row._mk=mk;
+    return row;
+  });
+  measureRows();tick();
+}
+function measureRows(){
+  rows.forEach(row=>{
+    if(!row._len)return;
+    while(row.children.length>row._len*2)row.lastChild.remove();
+    const period=row.children[row._len].offsetLeft-row.children[0].offsetLeft;
+    row._p=period;
+    if(!(period>0))return;
+    let sets=2;
+    while(sets*period<period+innerWidth*1.4||sets<3){row.append(row._mk());sets++;if(sets>10)break}
+  });
+}
+function captions(){
+  document.querySelectorAll('.mq-tile').forEach(t=>{const it=md().byId(t.dataset.id);if(it){const b=t.querySelector('b');if(b)b.textContent=md().tx(it.n)}});
+}
+
+/* ---------- photos des cartes empilées ---------- */
+function loadStackImgs(){
+  document.querySelectorAll('.stack-card').forEach(c=>{
+    const it=pickFor(c.dataset.k);if(!it)return;
+    md().cover(it,1280).then(u=>{if(u)setBg(c,u)}).catch(()=>{});
+  });
+}
+
+/* ---------- footer ---------- */
+function footerNav(){
+  const t=md().T[md().lang()],f=F();
+  const btn=(i,l)=>`<button type="button" data-tab="${i}">${l}</button>`;
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  $('sfC1').innerHTML=t.nav.slice(0,4).map((l,i)=>btn(i,esc(l))).join('');
+  $('sfC2').innerHTML=t.nav.slice(4).map((l,i)=>btn(i+4,esc(l))).join('');
+  $('sfC3').innerHTML=`<a href="Map-Wine-Routes-of-Moldova-2023-1.pdf" target="_blank" rel="noopener">${esc(f.fPdf)}</a><a href="https://moldova.travel/" target="_blank" rel="noopener">Moldova.travel</a><button type="button" id="sfTop">↑ ${esc(f.fTop)}</button>`;
+  fitWord();
+}
+function fitWord(){
+  const w=$('sfW');if(!w)return;
+  const c=w.parentNode,m=c.querySelector('.sf-mark');
+  const avail=c.clientWidth-m.offsetWidth-parseFloat(getComputedStyle(m).marginRight||0);
+  if(avail<=0)return;
+  const prev={d:w.style.display,f:w.style.flex};
+  w.style.display='inline-block';w.style.flex='none';w.style.fontSize='100px';
+  const ww=w.getBoundingClientRect().width;
+  w.style.display=prev.d;w.style.flex=prev.f;
+  if(ww>0)w.style.fontSize=clamp(100*avail/ww*0.985,24,260)+'px';
+}
+
+/* ---------- bouton haut de page ---------- */
+function initTop(){
+  const t=$('top');if(!t)return;
+  t.innerHTML='<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="trk" cx="24" cy="24" r="21"/><circle class="pbar" cx="24" cy="24" r="21"/></svg><svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  document.addEventListener('click',e=>{if(e.target.closest('#sfTop'))scrollTo({top:0,behavior:'smooth'})});
+}
+
+/* ---------- boucle de scroll (une seule) ---------- */
+let ticking=false,mx=0,my=0,hh=58,bandTop=0;
+function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(tick)}}
+function setHH(){const h=document.querySelector('header');if(h){hh=h.offsetHeight||58;root.style.setProperty('--hh',hh+'px')}}
+function tick(){
+  ticking=false;
+  const y=scrollY,vh=innerHeight,hero=$('hero');
+  const max=root.scrollHeight-vh,pg=max>0?clamp(y/max):0;
+  root.style.setProperty('--p',pg.toFixed(4));
+  const top=$('top');if(top)top.style.setProperty('--pr',pg.toFixed(4));
+  if(hero){
+    const hb=hero.getBoundingClientRect().bottom;
+    document.body.classList.toggle('on-hero',hb>hh+12);
+    const hp=RM?0:clamp(y/(hero.offsetHeight*.9));
+    hero.style.setProperty('--vy',(hp*90).toFixed(1)+'px');
+    hero.style.setProperty('--vs',(1.02+hp*.12).toFixed(4));
+    const hin=$('hin');
+    if(hin){
+      hin.style.transform=RM?'':`translate3d(0,${(-hp*70).toFixed(1)}px,0) rotateX(${(my*-3).toFixed(2)}deg) rotateY(${(mx*4).toFixed(2)}deg)`;
+      hin.style.opacity=RM?'':(1-clamp(hp*1.35)).toFixed(3);
+    }
+  }
+  // phrase qui s'allume
+  const st=$('intro');
+  if(st&&wordEls.length){
+    if(RM){wordEls.forEach(w=>w.style.opacity=1)}
+    else{
+      const r=st.getBoundingClientRect(),p=clamp((vh*.9-r.top)/(vh*.25+r.height*.55)),N=wordEls.length;
+      wordEls.forEach((w,i)=>{w.style.opacity=(.14+.86*clamp((p*1.25*N-i)/4)).toFixed(3)});
+    }
+  }
+  // galerie en perspective
+  const band=$('band');
+  if(band&&!band.hidden&&rows.length&&!RM){
+    const r=band.getBoundingClientRect();
+    if(r.bottom>-200&&r.top<vh+200){
+      const s=(vh-r.top)*.5;
+      rows.forEach((row,ri)=>{const P=row._p;if(!P)return;const pos=((s%P)+P)%P;row.style.transform=`translate3d(${ri?-pos:pos-P}px,0,0)`});
+    }
+  }
+  // cartes empilées
+  const cards=[...document.querySelectorAll('.stack-card')],items=[...document.querySelectorAll('.stack-item')];
+  if(cards.length&&!RM){
+    const arrive=items.map((it,j)=>{
+      if(!j)return 0;
+      const st0=hh+14+(j-1)*20,nx=it.getBoundingClientRect().top;
+      return clamp(1-(nx-st0)/(vh-st0));
+    });
+    cards.forEach((c,i)=>{
+      let sum=0;for(let j=i+1;j<cards.length;j++)sum+=arrive[j]*.045;
+      c.style.setProperty('--sc',(1-sum).toFixed(4));
+      c.style.setProperty('--br',(1-sum*3.2).toFixed(3));
+    });
+  }
+}
+
+/* ---------- révélations ---------- */
+function initReveal(){
+  const els=[...document.querySelectorAll('.rv')];
+  if(RM||!('IntersectionObserver' in window)){els.forEach(e=>e.classList.add('is-in'));return}
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-in');io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  els.forEach(e=>io.observe(e));
+  setTimeout(()=>els.forEach(e=>e.classList.add('is-in')),6000);   // sécurité
+}
+
+/* ---------- inclinaison 3D des cartes du catalogue ---------- */
+function initTilt(){
+  if(RM)return;
+  document.addEventListener('pointermove',e=>{
+    if(e.pointerType!=='mouse')return;
+    const c=e.target.closest&&e.target.closest('.grid .card');if(!c)return;
+    const r=c.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+    c.style.setProperty('--ry',((px-.5)*10).toFixed(2)+'deg');
+    c.style.setProperty('--rx',((.5-py)*8).toFixed(2)+'deg');
+    c.style.setProperty('--gx',(px*100).toFixed(1)+'%');
+    c.style.setProperty('--gy',(py*100).toFixed(1)+'%');
+  },{passive:true});
+  document.addEventListener('pointerout',e=>{
+    const c=e.target.closest&&e.target.closest('.grid .card');
+    if(c&&!c.contains(e.relatedTarget)){c.style.setProperty('--rx','0deg');c.style.setProperty('--ry','0deg')}
+  });
+  const hero=$('hero');
+  hero.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=hero.getBoundingClientRect();mx=(e.clientX-r.left)/r.width-.5;my=(e.clientY-r.top)/r.height-.5;onScroll()},{passive:true});
+  hero.addEventListener('pointerleave',()=>{mx=0;my=0;onScroll()});
+}
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('mq-tile')){e.preventDefault();e.target.click()}
+});
+
+/* ---------- globe 3D (Three.js chargé à la demande) ---------- */
+function loadScript(src){return new Promise((ok,ko)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=ko;document.head.append(s)})}
+function noGlobe(){const g=$('globe');if(g)g.hidden=true;const e=$('earthIn');if(e)e.classList.add('nog')}
+let globeStarted=false;
+async function startGlobe(){
+  if(globeStarted)return;globeStarted=true;
+  try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')}catch{return noGlobe()}
+  const THREE=window.THREE;if(!THREE)return noGlobe();
+  const box=$('globe'),canvas=$('gc'),tag=$('gTag');
+  let renderer;
+  try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'})}catch{return noGlobe()}
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(32,1,.1,100);cam.position.set(0,0,9.4);
+  scene.add(new THREE.AmbientLight(0x9fb6d8,.8));
+  const sun=new THREE.DirectionalLight(0xfff3dc,1.35);sun.position.set(5,2.5,5);scene.add(sun);
+  const rim=new THREE.DirectionalLight(0x00d2ff,.9);rim.position.set(-6,4,-3);scene.add(rim);
+  const globe=new THREE.Group();scene.add(globe);
+  const TL=new THREE.TextureLoader(),base='https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/';
+  const tex=(f,srgb,onErr)=>{const t=TL.load(base+f,undefined,undefined,onErr);if(srgb)t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t};
+  const earthMat=new THREE.MeshPhongMaterial({color:0xffffff,specular:0x333333,shininess:15,emissive:0xffffee,emissiveIntensity:.55});
+  earthMat.map=tex('earth_atmos_2048.jpg',true,()=>{earthMat.map=null;earthMat.color.set(0x2d6aa8);earthMat.needsUpdate=true});
+  earthMat.specularMap=tex('earth_specular_2048.jpg');
+  earthMat.normalMap=tex('earth_normal_2048.jpg');
+  earthMat.emissiveMap=tex('earth_lights_2048.png',true);
+  const earth=new THREE.Mesh(new THREE.SphereGeometry(2,64,64),earthMat);globe.add(earth);
+  const clouds=new THREE.Mesh(new THREE.SphereGeometry(2.03,64,64),new THREE.MeshPhongMaterial({map:tex('earth_clouds_1024.png',true),transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+  globe.add(clouds);
+  // halo
+  const cv=document.createElement('canvas');cv.width=cv.height=512;
+  const g=cv.getContext('2d'),gr=g.createRadialGradient(256,256,190,256,256,256);
+  gr.addColorStop(0,'rgba(202,245,255,0.49)');gr.addColorStop(1,'rgba(0,210,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,512,512);
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),blending:THREE.AdditiveBlending,transparent:true,opacity:.45,depthWrite:false}));
+  halo.scale.set(5.6,5.6,1);halo.position.set(0,0,-.2);scene.add(halo);
+  // repère sur la Moldavie
+  const R=2,lat=47.0,lon=28.5,phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;
+  const mv=new THREE.Vector3(-R*Math.sin(phi)*Math.cos(theta),R*Math.cos(phi),R*Math.sin(phi)*Math.sin(theta));
+  const pin=new THREE.Mesh(new THREE.SphereGeometry(.045,16,16),new THREE.MeshBasicMaterial({color:0xffd86b}));
+  pin.position.copy(mv).multiplyScalar(1.008);earth.add(pin);
+  const rings=[0,1].map(()=>{
+    const m=new THREE.Mesh(new THREE.RingGeometry(.06,.078,48),new THREE.MeshBasicMaterial({color:0xffd86b,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+    m.position.copy(mv).multiplyScalar(1.01);m.lookAt(mv.clone().multiplyScalar(3));earth.add(m);return m});
+  // orientation : Moldavie face caméra, légèrement au-dessus du centre
+  const Y=new THREE.Vector3(0,1,0),X=new THREE.Vector3(1,0,0);
+  const qFocus=new THREE.Quaternion().setFromUnitVectors(mv.clone().normalize(),new THREE.Vector3(0,.16,1).normalize());
+  const qT=new THREE.Quaternion(),qTmp=new THREE.Quaternion();
+  globe.quaternion.copy(RM?qFocus:new THREE.Quaternion().setFromAxisAngle(Y,-2.4).multiply(qFocus));
+  // glisser pour tourner
+  let drag=false,lx=0,ly=0,idleAt=0;
+  canvas.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;try{canvas.setPointerCapture(e.pointerId)}catch{}});
+  canvas.addEventListener('pointermove',e=>{
+    if(!drag)return;const dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;
+    globe.quaternion.premultiply(qTmp.setFromAxisAngle(Y,dx*.006)).premultiply(qTmp.setFromAxisAngle(X,dy*.006));
+  });
+  const up=()=>{if(drag){drag=false;idleAt=performance.now()+2500}};
+  canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+  // taille
+  const resize=()=>{const w=box.clientWidth||400,h=box.clientHeight||w;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()};
+  resize();
+  if('ResizeObserver' in window)new ResizeObserver(resize).observe(box);else addEventListener('resize',resize);
+  // boucle : uniquement quand le globe est visible
+  let visible=false,raf=0,t0=0;
+  const wp=new THREE.Vector3();
+  const frame=t=>{
+    if(!visible)return;raf=requestAnimationFrame(frame);
+    if(!t0)t0=t;
+    const k=RM?1:clamp((t-t0)/1300),e=1-Math.pow(1-k,3);
+    globe.scale.setScalar(.78+.22*e);
+    clouds.rotation.y+=RM?0:.0006;
+    rings.forEach((r,i)=>{const s=((t/1500)+i*.5)%1;r.scale.setScalar(1+s*3.2);r.material.opacity=(1-s)*.85});
+    if(!drag&&performance.now()>idleAt){
+      qT.setFromAxisAngle(Y,RM?0:Math.sin(t/2600)*.1).multiply(qFocus);
+      globe.quaternion.slerp(qT,.035);
+    }
+    renderer.render(scene,cam);
+    // étiquette qui suit le repère
+    pin.getWorldPosition(wp);
+    const facing=wp.z>.35;
+    wp.project(cam);
+    tag.style.transform=`translate(${((wp.x*.5+.5)*box.clientWidth+16).toFixed(1)}px,${((-wp.y*.5+.5)*box.clientHeight-14).toFixed(1)}px)`;
+    tag.classList.toggle('on',facing&&k>.6);
+  };
+  new IntersectionObserver(es=>es.forEach(en=>{
+    visible=en.isIntersecting;
+    if(visible){t0=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}else cancelAnimationFrame(raf);
+  }),{threshold:.05}).observe(box);
+}
+function initGlobeLazy(){
+  const e=$('earth');if(!e)return;
+  if(!('IntersectionObserver' in window)){startGlobe();return}
+  const io=new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)){io.disconnect();startGlobe()}},{rootMargin:'400px'});
+  io.observe(e);
+}
+
+/* ---------- mise à jour appelée par le site à chaque rendu ---------- */
+let lastSig='',mediaTimer=0;
+const update=safe(()=>{
+  if(!md())return;
+  const L=md().lang();
+  if(L!==curLang){curLang=L;applyText()}
+  counts();
+  const I=md().ITEMS,sig=I.length+':'+I.filter(i=>i.api).length+':'+I.filter(i=>i.cover).length;
+  if(sig!==lastSig){
+    lastSig=sig;clearTimeout(mediaTimer);
+    mediaTimer=setTimeout(safe(()=>{buildMarquee();loadStackImgs()}),lastSig?350:0);
+  }
+});
+window.mdFX={update};
+
+/* ---------- démarrage ---------- */
+const init=safe(()=>{
+  setHH();
+  initVideo();initTop();initReveal();initTilt();initGlobeLazy();
+  addEventListener('scroll',onScroll,{passive:true});
+  addEventListener('resize',()=>{setHH();measureRows();fitWord();onScroll()});
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{setHH();fitWord();onScroll()});
+  if(md())update();
+  tick();
+});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script></body></html>
