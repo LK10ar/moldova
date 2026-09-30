@@ -117,8 +117,8 @@ body.on-hero select option{color:#111;background:#fff}
 
 /* --- hero --- */
 .hero{position:relative;isolation:isolate;overflow:hidden;margin-top:calc(var(--hh,58px)*-1);padding:calc(var(--hh,58px) + 30px) 20px 28px;min-height:100vh;min-height:min(100svh,960px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;perspective:1200px}
-.hero video{position:absolute;left:0;top:-4%;width:100%;height:108%;object-fit:cover;z-index:-2;opacity:0;transition:opacity 1.2s ease;transform:translate3d(0,var(--vy,0px),0) scale(var(--vs,1.02));will-change:transform}
-.hero.vready video{opacity:1}
+.hero video{position:absolute;left:0;top:-4%;width:100%;height:108%;object-fit:cover;z-index:-2;animation:vfade 1.2s ease both;transform:translate3d(0,var(--vy,0px),0) scale(var(--vs,1.02));will-change:transform}
+@keyframes vfade{from{opacity:0}to{opacity:1}}
 .hero video.fail{display:none}
 .hero-shade{position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(120% 90% at 50% 40%,#0000 0%,#0007 75%),linear-gradient(#0005,#0007 60%,#000c)}
 .hero-in{position:relative;z-index:2;width:100%;max-width:1000px;will-change:transform,opacity;transition:transform .18s ease-out}
@@ -951,9 +951,10 @@ function initVideo(){
   const fail=()=>{v.classList.add('fail');btn.hidden=true};
   last.addEventListener('error',fail);
   v.addEventListener('error',fail);
-  v.addEventListener('loadeddata',()=>{hero.classList.add('vready');btn.hidden=false;if(RM&&!v.paused){v.pause();userPaused=true}syncVideoBtn()});
+  const ready=()=>{hero.classList.add('vready');btn.hidden=false;if(RM&&!v.paused){v.pause();userPaused=true}syncVideoBtn()};
+  if(v.readyState>=2)ready();else v.addEventListener('loadeddata',ready,{once:true});
   v.addEventListener('play',syncVideoBtn);v.addEventListener('pause',syncVideoBtn);
-  v.muted=true;
+  v.muted=true;v.defaultMuted=true;v.volume=0;
   if(RM){v.removeAttribute('autoplay');v.pause();userPaused=true}
   btn.addEventListener('click',()=>{if(v.paused){userPaused=false;v.play().catch(()=>{})}else{userPaused=true;v.pause()}});
   new IntersectionObserver(es=>es.forEach(e=>{
