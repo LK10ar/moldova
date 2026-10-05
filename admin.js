@@ -7,6 +7,7 @@ const slugify = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u
 const LG = ['fr', 'en', 'es', 'ro', 'ru'];
 const LGN = { fr: 'Français', en: 'English', es: 'Español', ro: 'Română', ru: 'Русский' };
 let token = sessionStorage.getItem('md_t') || '';
+const S0 = { homeTab: 'look' };
 
 /* ---------------------------------------------------------------- réseau */
 async function call(path, opt = {}) {
@@ -55,13 +56,14 @@ const MENU = [
 ];
 const DEF_CARDS = {
   c: { n: '01 · Circuits', t: 'Circuits clé en main', d: 'Itinéraires de 2 à 3 jours à travers le centre, le nord, le sud et la Gagaouzie.', g: 'linear-gradient(135deg,#2f5d3a,#14301f)' },
-  g: { n: '02 · Vin & gastronomie', t: 'Vin & gastronomie', d: 'Caves souterraines, domaines des Codri, mămăligă et plăcinte : la Moldavie se déguste.', g: 'linear-gradient(135deg,#8c2340,#3a0f1c)' },
+  g: { n: '02 · Vin & gastronomie', t: 'Vin & gastronomie', d: 'Caves souterraines, domaines des Codri, mămăligă et plăcinte : la Moldavie se déguste.', g: 'linear-gradient(135deg,#1fa37a,#0b2f36)' },
   h: { n: '03 · Histoire & culture', t: 'Histoire & culture', d: 'Orheiul Vechi, Soroca, Țipova, Căpriana : des monastères rupestres aux forteresses du Dniestr.', g: 'linear-gradient(135deg,#8a5a00,#3b2600)' },
   t: { n: '04 · Transnistrie', t: 'Transnistrie', d: 'Bender, Tiraspol, Chițcani : héritage soviétique et forteresse ottomane. Passeport requis au poste de contrôle.', g: 'linear-gradient(135deg,#1d4f9c,#0d2450)' }
 };
 
 /* ---------------------------------------------------------------- état */
-const S = { view: '', list: [], filter: 'all', q: '', home: null, homeErr: '', dirty: false, homeTab: 'gallery', cands: [], candCount: 0 };
+const S = { view: '', list: [], filter: 'all', q: '', home: null, homeErr: '', dirty: false, homeTab: 'look', cands: [], candCount: 0 };
+const normHome = d => ({ gallery: d.gallery || [], cards: d.cards || {}, cardOrder: d.cardOrder || [], sections: d.sections || [], theme: d.theme || {}, texts: d.texts || {}, heroImage: d.heroImage || '', heroVideo: d.heroVideo || '' });
 const bg = u => u ? `style="background-image:url(&quot;${esc(u)}&quot;)"` : '';
 const isUrl = v => /^https?:\/\//i.test(String(v || '').trim());
 
@@ -365,13 +367,13 @@ async function showHome() {
   $('topbar').innerHTML = `<h2>🏠 Accueil du site<small>Gère ce qui s'affiche sur la page d'accueil : carrousel « Un pays en images », cartes « Par où commencer » et vidéo du header.</small></h2>`;
   $('content').innerHTML = `<div class="skeleton"></div>`;
   if (!S.home) {
-    try { const d = await call('settings/home'); S.home = { gallery: d.gallery || [], cards: d.cards || {}, heroVideo: d.heroVideo || '' }; S.homeErr = ''; }
-    catch (e) { S.home = { gallery: [], cards: {}, heroVideo: '' }; S.homeErr = e.message; }
+    try { const d = await call('settings/home'); S.home = normHome(d); S.homeErr = ''; }
+    catch (e) { S.home = normHome({}); S.homeErr = e.message; }
   }
   drawHome();
 }
 function drawHome() {
-  const H = S.home, tabs = [['gallery', '🖼 Galerie « Un pays en images »', H.gallery.length], ['cards', '🃏 Cartes « Par où commencer »', Object.keys(H.cards).length], ['video', '🎬 Vidéo du header', H.heroVideo ? 1 : 0]];
+  const H = S.home, tabs = [['look', '🎨 Apparence', Object.keys(H.theme).length], ['sections', '🧩 Sections & ordre', H.sections.length + H.cardOrder.length], ['texts', '✍️ Textes', Object.keys(H.texts).length], ['gallery', '🖼 Galerie « Un pays en images »', H.gallery.length], ['cards', '🃏 Cartes « Par où commencer »', Object.keys(H.cards).length], ['video', '🎬 Header (vidéo & photo)', (H.heroVideo ? 1 : 0) + (H.heroImage ? 1 : 0)]];
   let h = '';
   if (S.homeErr) h += `<div class="card-sec" style="border-color:#e5615f88"><h5>⚠ Le serveur ne répond pas à cette section</h5><p class="hint" style="margin:0">${esc(S.homeErr)}. Si c'est une erreur 404, le fichier <b>server.js</b> mis à jour n'est pas encore déployé sur Render : mets-le à jour dans ton dépôt, Render le redéploie tout seul.</p></div>`;
   h += `<div class="tools"><div class="seg">${tabs.map(([k, l, n]) => `<button data-ht="${k}" class="${S.homeTab === k ? 'on' : ''}">${l}${n ? ` (${n})` : ''}</button>`).join('')}</div></div><div id="homeBody"></div>`;
@@ -384,6 +386,9 @@ function drawHome() {
 function homeDirty() { S.dirty = true; const b = $('saveBar'); if (b) b.classList.remove('hide'); }
 function drawHomeBody() {
   const box = $('homeBody'); if (!box) return;
+  if (S.homeTab === 'look') return drawLook(box);
+  if (S.homeTab === 'sections') return drawSections(box);
+  if (S.homeTab === 'texts') return drawTexts(box);
   if (S.homeTab === 'gallery') return drawGallery(box);
   if (S.homeTab === 'cards') return drawCards(box);
   drawVideo(box);
@@ -487,6 +492,7 @@ document.addEventListener('input', e => {
     if (!Object.keys(c).length) delete C[k];
     homeDirty();
   }
+  if (e.target.id === 'hImage') { S.home.heroImage = e.target.value.trim(); const p = $('hiPrev'); if (p) p.src = isUrl(S.home.heroImage) ? S.home.heroImage : ''; homeDirty(); }
   if (e.target.id === 'hVideo') { S.home.heroVideo = e.target.value.trim(); const p = $('hvPrev'); if (p) { if (isUrl(S.home.heroVideo)) { p.src = S.home.heroVideo; p.classList.remove('hide'); } else p.classList.add('hide'); } homeDirty(); }
 });
 document.addEventListener('click', e => {
@@ -496,10 +502,128 @@ document.addEventListener('click', e => {
   const r = e.target.closest('[data-r]');
   if (r && confirm('Remettre les textes et la photo automatiques pour cette carte ?')) { delete S.home.cards[r.dataset.r]; homeDirty(); drawCards($('homeBody')); }
 });
-/* --- vidéo du header --- */
+
+/* --- apparence : couleurs, polices, mode --- */
+const TH0 = { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#0b3a35', mode: 'dark', ff: 'Playfair Display', fb: 'Georgia' };
+const PRESETS = [
+  { n: 'Nuit & or', t: { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#0b3a35' } },
+  { n: 'Vignoble', t: { p1: '#3aa86a', ac: '#f0c36d', bg: '#08140e', cat: '#0d2118', ft: '#0f2a1d' } },
+  { n: 'Azur & sable', t: { p1: '#1fa3d6', ac: '#f2d49b', bg: '#06141c', cat: '#0a2230', ft: '#0a2c38' } },
+  { n: 'Violet nuit', t: { p1: '#8b5cf6', ac: '#fbbf24', bg: '#0d0a1c', cat: '#150f2e', ft: '#1d1245' } },
+  { n: 'Cuivre', t: { p1: '#e0742f', ac: '#ffd08a', bg: '#100a07', cat: '#1c110b', ft: '#2a1a10' } },
+  { n: 'Bordeaux (ancien)', t: { p1: '#1fa37a', ac: '#e8b45a', bg: '#14100b', cat: '#1a0b11', ft: '#0f3222' } }
+];
+const FH = ['Playfair Display', 'Cormorant Garamond', 'DM Serif Display', 'Fraunces', 'Lora', 'Montserrat', 'Poppins', 'Space Grotesk', 'Syne', 'Bebas Neue', 'Unbounded'];
+const FB = ['Georgia', 'Inter', 'DM Sans', 'Manrope', 'Nunito', 'Lora', 'Poppins', 'Montserrat', 'system-ui'];
+const FSPEC = { 'Playfair Display': 'wght@500;600;700', 'Cormorant Garamond': 'wght@500;600;700', 'DM Serif Display': '', 'Fraunces': 'wght@500;600;700', 'Lora': 'wght@400;500;600;700', 'Montserrat': 'wght@400;500;600;700', 'Poppins': 'wght@400;500;600;700', 'Space Grotesk': 'wght@400;500;600;700', 'Syne': 'wght@500;600;700', 'Bebas Neue': '', 'Unbounded': 'wght@400;500;600;700', 'Inter': 'wght@400;500;600;700', 'DM Sans': 'wght@400;500;600;700', 'Manrope': 'wght@400;500;600;700', 'Nunito': 'wght@400;500;600;700' };
+const fontsLoaded = new Set(['Playfair Display']);
+function loadFont(n) { if (!(n in FSPEC) || fontsLoaded.has(n)) return; fontsLoaded.add(n); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=' + n.replace(/ /g, '+') + (FSPEC[n] ? ':' + FSPEC[n] : '') + '&display=swap'; document.head.append(l); }
+const fam = (n, serif) => n === 'system-ui' ? 'system-ui,sans-serif' : n === 'Georgia' ? 'Georgia,serif' : `'${n}',${serif ? 'Georgia,serif' : 'system-ui,sans-serif'}`;
+const THK = [['p1', 'Couleur principale', 'Boutons, éléments actifs, carte'], ['ac', "Couleur d'accent", 'Sur-titres, anneau du bouton haut, points, contour de la Moldavie'], ['bg', 'Fond du site', 'Fond général de la page'], ['cat', 'Fond du catalogue', 'Zone « Tout explorer »'], ['ft', 'Fond du pied de page', 'Footer']];
+const thv = k => (S.home.theme[k] || TH0[k]);
+const lum = h => { const v = parseInt(h.slice(1), 16); return (.299 * (v >> 16) + .587 * (v >> 8 & 255) + .114 * (v & 255)); };
+function drawLook(box) {
+  const T = S.home.theme;
+  FH.forEach(loadFont); FB.forEach(loadFont);
+  box.innerHTML = `<div class="lookgrid"><div>
+   <div class="card-sec"><h5>Palettes prêtes à l'emploi</h5><div class="presets">${PRESETS.map((p, i) => `<button type="button" class="preset" data-pre="${i}"><span class="sw"><i style="background:${p.t.bg}"></i><i style="background:${p.t.cat}"></i><i style="background:${p.t.p1}"></i><i style="background:${p.t.ac}"></i><i style="background:${p.t.ft}"></i></span>${esc(p.n)}</button>`).join('')}</div></div>
+   <div class="card-sec"><h5>Couleurs</h5>${THK.map(([k, l, h]) => `<div class="crow"><input type="color" data-th="${k}" value="${thv(k)}" aria-label="${esc(l)}"><div><b>${esc(l)}</b><small>${esc(h)}</small></div><input class="hex" data-thx="${k}" value="${thv(k)}" maxlength="7" spellcheck="false" aria-label="Code couleur ${esc(l)}"></div>`).join('')}</div>
+   <div class="card-sec"><h5>Polices</h5>
+    <label class="f"><span>Titres</span><select data-thsel="ff">${FH.map(n => `<option ${thv('ff') === n ? 'selected' : ''} style="font-family:'${n}'">${n}</option>`).join('')}</select></label>
+    <label class="f"><span>Textes</span><select data-thsel="fb">${FB.map(n => `<option ${thv('fb') === n ? 'selected' : ''}>${n}</option>`).join('')}</select><em>« Georgia » = la police d'origine du site.</em></label>
+    <label class="f"><span>Mode</span><select data-thsel="mode"><option value="dark" ${thv('mode') === 'dark' ? 'selected' : ''}>Sombre (recommandé)</option><option value="light" ${thv('mode') === 'light' ? 'selected' : ''}>Clair</option><option value="auto" ${thv('mode') === 'auto' ? 'selected' : ''}>Automatique (suit l'appareil du visiteur)</option></select></label>
+    <button type="button" class="btn" data-threset>↺ Revenir aux réglages d'origine</button></div>
+  </div><div class="lookprev"><div class="card-sec" style="position:sticky;top:90px"><h5>Aperçu en direct</h5><div id="lpv"></div><p class="hint" style="margin:12px 0 0">Les titres, les boutons et le pied de page prennent ces couleurs sur tout le site après enregistrement.</p></div></div></div>`;
+  drawPreview();
+}
+function drawPreview() {
+  const p = $('lpv'); if (!p) return;
+  const p1 = thv('p1'), ac = thv('ac'), bg = thv('bg'), cat = thv('cat'), ft = thv('ft'), light = thv('mode') === 'light';
+  const fg = light ? '#0f1b2e' : '#eaf1fb', base = light ? '#f4f7fb' : bg, on = lum(p1) > 150 ? '#1a1203' : '#fff';
+  const mix = (a, b, pc) => `color-mix(in srgb,${a} ${pc}%,${b})`;
+  p.innerHTML = `<div class="pv" style="background:${base};color:${fg};font-family:${fam(thv('fb'))}">
+   <div class="pv-hero" style="background:linear-gradient(#0006,#000a),radial-gradient(80% 90% at 70% 10%,${mix(p1, '#000', 55)},${bg})"><span class="pv-eye" style="color:#fff"><i style="background:${ac}"></i>Guide de voyage</span><h4 style="font-family:${fam(thv('ff'), 1)};color:#fff">Découvrez la Moldavie</h4><button type="button" style="background:linear-gradient(135deg,${p1},${mix(p1, '#000', 60)});color:${on}">Explorer les circuits →</button></div>
+   <div class="pv-body"><span style="color:${light ? p1 : ac};font-size:11px;font-weight:700;letter-spacing:.2em">LE CATALOGUE</span><div style="font-family:${fam(thv('ff'), 1)};font-size:22px;font-weight:600;margin:4px 0 10px">Tout explorer</div>
+   <div class="pv-cat" style="background:${cat}"><span style="background:linear-gradient(135deg,${p1},${mix(p1, '#000', 60)});color:${on}">Circuits</span><span style="background:#ffffff14;color:#eaf1fb">Vin</span><span style="background:#ffffff14;color:#eaf1fb">Histoire</span></div></div>
+   <div class="pv-ft" style="background:linear-gradient(180deg,${ft},${mix(ft, '#000', 60)})"><b style="font-family:${fam(thv('ff'), 1)};background:linear-gradient(180deg,${mix(ac, '#fff', 25)},${ac});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Moldova Explorer</b></div></div>`;
+}
+function setTheme(k, v) { if (v === '' || v == null) delete S.home.theme[k]; else S.home.theme[k] = v; homeDirty(); drawPreview(); }
+document.addEventListener('input', e => {
+  if (S.view !== 'home' || S.homeTab !== 'look') return;
+  const t = e.target;
+  if (t.dataset.th) { setTheme(t.dataset.th, t.value); const x = document.querySelector(`[data-thx="${t.dataset.th}"]`); if (x) x.value = t.value; }
+  if (t.dataset.thx && /^#[0-9a-f]{6}$/i.test(t.value.trim())) { setTheme(t.dataset.thx, t.value.trim().toLowerCase()); const c = document.querySelector(`[data-th="${t.dataset.thx}"]`); if (c) c.value = t.value.trim().toLowerCase(); }
+});
+document.addEventListener('change', e => {
+  if (S.view !== 'home' || S.homeTab !== 'look') return;
+  const t = e.target; if (t.dataset.thsel) { setTheme(t.dataset.thsel, t.value); }
+});
+document.addEventListener('click', e => {
+  if (S.view !== 'home' || S.homeTab !== 'look') return;
+  const pre = e.target.closest('[data-pre]');
+  if (pre) { Object.assign(S.home.theme, PRESETS[+pre.dataset.pre].t); homeDirty(); drawLook($('homeBody')); return; }
+  if (e.target.closest('[data-threset]') && confirm("Revenir à l'apparence d'origine (palette, polices, mode) ?")) { S.home.theme = {}; homeDirty(); drawLook($('homeBody')); }
+});
+
+/* --- sections & ordre --- */
+const SECS = [{ id: 'intro', i: '✍️', l: "Phrase d'introduction", d: "La phrase qui s'allume mot par mot" }, { id: 'stack', i: '🃏', l: 'Cartes « Par où commencer »', d: "Les cartes qui s'empilent" }, { id: 'gallery', i: '🖼', l: 'Galerie « Un pays en images »', d: 'Le carrousel de photos' }, { id: 'globe', i: '🌍', l: 'Globe 3D', d: 'La planète avec la frontière de la Moldavie' }, { id: 'catalogue', i: '📚', l: 'Catalogue', d: 'Circuits, vin, histoire, carte…' }];
+const CARDS = { c: 'Circuits clé en main', g: 'Vin & gastronomie', h: 'Histoire & culture', t: 'Transnistrie' };
+const secOrder = () => { const o = S.home.sections.map(s => s.id).filter(id => SECS.some(x => x.id === id)); SECS.forEach(x => { if (!o.includes(x.id)) o.push(x.id); }); return o; };
+const secOn = id => { const c = S.home.sections.find(s => s.id === id); return !c || c.on !== false; };
+const cardOrder = () => { const o = S.home.cardOrder.filter(k => k in CARDS); Object.keys(CARDS).forEach(k => { if (!o.includes(k)) o.push(k); }); return o; };
+const cardOn = k => !(S.home.cards[k] && S.home.cards[k].off);
+function drawSections(box) {
+  const so = secOrder(), co = cardOrder();
+  box.innerHTML = `<p class="hint">Le header (vidéo) reste toujours en haut et le pied de page en bas. Utilise ▲ ▼ pour déplacer, l'interrupteur pour masquer.</p>
+  <div class="card-sec"><h5>Sections de la page d'accueil</h5><div class="olist">${so.map((id, i) => { const x = SECS.find(s => s.id === id); return `<div class="orow ${secOn(id) ? '' : 'off'}" data-sec="${id}"><span class="ic">${x.i}</span><div class="info"><b>${esc(x.l)}</b><small>${esc(x.d)}</small></div><button class="btn sm ico" data-so="up" ${i === 0 ? 'disabled' : ''} aria-label="Monter">▲</button><button class="btn sm ico" data-so="down" ${i === so.length - 1 ? 'disabled' : ''} aria-label="Descendre">▼</button><label class="sw2"><input type="checkbox" data-sv ${secOn(id) ? 'checked' : ''}><i></i></label></div>`; }).join('')}</div></div>
+  <div class="card-sec"><h5>Cartes « Par où commencer »</h5><div class="olist">${co.map((k, i) => `<div class="orow ${cardOn(k) ? '' : 'off'}" data-ck="${k}"><span class="ic">${i + 1}</span><div class="info"><b>${esc((S.home.cards[k] && S.home.cards[k].title && S.home.cards[k].title.fr) || CARDS[k])}</b><small>Pile d'accueil — position ${i + 1}</small></div><button class="btn sm ico" data-co="up" ${i === 0 ? 'disabled' : ''} aria-label="Monter">▲</button><button class="btn sm ico" data-co="down" ${i === co.length - 1 ? 'disabled' : ''} aria-label="Descendre">▼</button><label class="sw2"><input type="checkbox" data-cv ${cardOn(k) ? 'checked' : ''}><i></i></label></div>`).join('')}</div></div>`;
+}
+function saveSecOrder(o) { const on = id => secOn(id); S.home.sections = o.map(id => ({ id, on: on(id) })); homeDirty(); }
+document.addEventListener('click', e => {
+  if (S.view !== 'home' || S.homeTab !== 'sections') return;
+  const so = e.target.closest('[data-so]'), co = e.target.closest('[data-co]');
+  if (so) { const id = so.closest('[data-sec]').dataset.sec, o = secOrder(), i = o.indexOf(id), j = so.dataset.so === 'up' ? i - 1 : i + 1; if (j < 0 || j >= o.length) return; o.splice(j, 0, o.splice(i, 1)[0]); saveSecOrder(o); drawSections($('homeBody')); }
+  if (co) { const k = co.closest('[data-ck]').dataset.ck, o = cardOrder(), i = o.indexOf(k), j = co.dataset.co === 'up' ? i - 1 : i + 1; if (j < 0 || j >= o.length) return; o.splice(j, 0, o.splice(i, 1)[0]); S.home.cardOrder = o; homeDirty(); drawSections($('homeBody')); }
+});
+document.addEventListener('change', e => {
+  if (S.view !== 'home' || S.homeTab !== 'sections') return;
+  if (e.target.matches('[data-sv]')) { const id = e.target.closest('[data-sec]').dataset.sec, o = secOrder(); const cur = S.home.sections.find(s => s.id === id); S.home.sections = o.map(x => ({ id: x, on: x === id ? e.target.checked : secOn(x) })); homeDirty(); drawSections($('homeBody')); }
+  if (e.target.matches('[data-cv]')) { const k = e.target.closest('[data-ck]').dataset.ck, c = S.home.cards[k] = S.home.cards[k] || {}; if (e.target.checked) delete c.off; else c.off = true; if (!Object.keys(c).length) delete S.home.cards[k]; homeDirty(); drawSections($('homeBody')); }
+});
+
+/* --- textes du site --- */
+const TXT = [['h1', "Titre principal du header", 'Découvrez la Moldavie', 1], ['sub', 'Sous-titre du header', "Vins, monastères, forteresses et Transnistrie au cœur de l'Europe de l'Est", 2], ['eye', 'Petite étiquette au-dessus du titre', 'Guide de voyage · Moldavie', 1], ['c1', 'Bouton 1 du header', 'Explorer les circuits', 1], ['c2', 'Bouton 2 du header', 'Voir la carte', 1],
+  ['st', "Phrase d'introduction (s'allume au scroll)", "Des caves creusées sous terre sur des kilomètres, des monastères taillés dans la falaise, des forteresses au bord du Dniestr : la Moldavie se découvre à son rythme, verre à la main.", 3],
+  ['kStack', 'Cartes : sur-titre', 'Par où commencer ?', 1], ['tStack', 'Cartes : titre', 'Quatre façons de découvrir le pays', 1], ['kGal', 'Galerie : sur-titre', 'Aperçu', 1], ['tGal', 'Galerie : titre', 'Un pays en images', 1],
+  ['kEarth', 'Globe : sur-titre', 'Sur la carte du monde', 1], ['tEarth', 'Globe : titre', "Au cœur de l'Europe de l'Est", 1], ['dEarth', 'Globe : texte', "Entre la Roumanie et l'Ukraine, la Moldavie se traverse en une journée et se savoure en une semaine. Fais tourner le globe pour la retrouver.", 3],
+  ['kCat', 'Catalogue : sur-titre', 'Le catalogue', 1], ['tCat', 'Catalogue : titre', 'Tout explorer', 1], ['fH', 'Pied de page : phrase', 'Vins, monastères et petites routes : la Moldavie vous attend.', 2]];
+let txtLang = 'fr';
+function drawTexts(box) {
+  const T = S.home.texts;
+  box.innerHTML = `<p class="hint">Laisse vide pour garder le texte d'origine du site. Chaque langue se règle séparément ; les cartes (titres et textes) se modifient dans l'onglet « Cartes ».</p>
+  <div class="langs" id="tl">${LG.map(l => `<button type="button" data-tl="${l}" class="${l === txtLang ? 'on' : ''} ${T[l] && Object.keys(T[l]).length ? 'has' : ''}">${LGN[l]}</button>`).join('')}</div>
+  <div class="card-sec">${TXT.map(([k, l, ph, r]) => `<label class="f"><span>${esc(l)}</span>${r > 1 ? `<textarea data-tx="${k}" rows="${r}" placeholder="${txtLang === 'fr' ? esc(ph) : 'Texte d\'origine du site'}">${esc((T[txtLang] || {})[k] || '')}</textarea>` : `<input data-tx="${k}" placeholder="${txtLang === 'fr' ? esc(ph) : 'Texte d\'origine du site'}" value="${esc((T[txtLang] || {})[k] || '')}">`}</label>`).join('')}</div>`;
+}
+document.addEventListener('input', e => {
+  if (S.view !== 'home' || S.homeTab !== 'texts' || !e.target.dataset.tx) return;
+  const T = S.home.texts, k = e.target.dataset.tx, v = e.target.value.trim();
+  T[txtLang] = T[txtLang] || {}; if (v) T[txtLang][k] = v; else delete T[txtLang][k];
+  if (!Object.keys(T[txtLang]).length) delete T[txtLang];
+  const b = document.querySelector(`[data-tl="${txtLang}"]`); if (b) b.classList.toggle('has', !!T[txtLang]);
+  homeDirty();
+});
+document.addEventListener('click', e => {
+  if (S.view !== 'home' || S.homeTab !== 'texts') return;
+  const b = e.target.closest('[data-tl]'); if (b) { txtLang = b.dataset.tl; drawTexts($('homeBody')); }
+});
+
+/* --- header : photo de fond + vidéo --- */
 function drawVideo(box) {
-  const v = S.home.heroVideo || '';
-  box.innerHTML = `<div class="card-sec"><h5>Vidéo de fond du header</h5><p class="hint">Par défaut, le site lit <b>assets/header.mp4</b> (le fichier de ton dépôt). Si tu colles ici l'adresse d'un autre fichier mp4 (https), elle passe en premier. La vidéo est toujours muette.</p>
+  const v = S.home.heroVideo || '', im = S.home.heroImage || '';
+  box.innerHTML = `<div class="card-sec"><h5>Photo de fond du header</h5><p class="hint">Visible avant que la vidéo démarre, et à la place de la vidéo si elle ne se charge pas. Vide = photo d'Orheiul Vechi choisie automatiquement.</p>
+  <label class="f"><span>Adresse de la photo (https)</span><input id="hImage" type="url" placeholder="https://…" value="${esc(im)}"></label>
+  <img class="prev" id="hiPrev" alt="" ${isUrl(im) ? `src="${esc(im)}"` : ''}></div>
+  <div class="card-sec"><h5>Vidéo de fond du header</h5><p class="hint">Par défaut, le site lit <b>assets/header.mp4</b> (le fichier de ton dépôt). Si tu colles ici l'adresse d'un autre fichier mp4 (https), elle passe en premier. La vidéo est toujours muette.</p>
   <label class="f"><span>Adresse d'un fichier mp4 (facultatif)</span><input id="hVideo" type="url" placeholder="https://lk10ar.github.io/moldova/assets/header.mp4" value="${esc(v)}"></label>
   <video class="vid-prev ${isUrl(v) ? '' : 'hide'}" id="hvPrev" src="${isUrl(v) ? esc(v) : ''}" muted controls playsinline preload="metadata"></video></div>`;
 }
@@ -507,7 +631,12 @@ async function saveHome() {
   const b = $('hSave'); if (b) { b.disabled = true; b.textContent = 'Enregistrement…'; }
   try {
     const d = await call('settings/home', { method: 'PUT', body: JSON.stringify(S.home) });
-    S.home = { gallery: d.gallery || [], cards: d.cards || {}, heroVideo: d.heroVideo || '' }; S.dirty = false; S.homeErr = '';
+    const wantsNew = Object.keys(S.home.theme).length || S.home.sections.length || S.home.cardOrder.length || Object.keys(S.home.texts).length || S.home.heroImage;
+    if (wantsNew && !('theme' in d)) {
+      S.homeErr = "Le serveur n'a pas encore la dernière version de server.js : l'apparence, l'ordre, les textes et la photo du header n'ont PAS été enregistrés (la galerie, les cartes et la vidéo, oui). Mets server.js à jour dans ton dépôt, attends que Render redéploie, puis réenregistre.";
+      toast('Serveur pas à jour : apparence non enregistrée', 'err'); drawHome(); return;
+    }
+    S.home = normHome(d); S.dirty = false; S.homeErr = '';
     toast("Accueil enregistré — visible sur le site dans quelques secondes"); drawHome();
   } catch (e) { toast(e.message, 'err'); if (b) { b.disabled = false; b.textContent = "Enregistrer l'accueil"; } }
 }
