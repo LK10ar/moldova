@@ -263,7 +263,8 @@ footer.sf{margin:-44px 0 0;padding:0;border:0;border-radius:44px 44px 0 0;backgr
 .cat-zone::after{width:600px;height:600px;right:-180px;bottom:8%;background:color-mix(in srgb,var(--gold) 15%,transparent);animation:orbB 23s ease-in-out infinite alternate}
 @keyframes orbA{to{transform:translate3d(180px,260px,0) scale(1.15)}}
 @keyframes orbB{to{transform:translate3d(-200px,-220px,0) scale(1.2)}}
-.cat-zone .cat-head{padding-top:clamp(80px,9vw,130px)}
+.cat-zone .cat-head{max-width:1180px;margin:0 auto;padding:clamp(90px,10vw,150px) clamp(20px,4vw,48px) 6px;text-align:left}
+.cat-zone main{padding-left:clamp(20px,4vw,48px);padding-right:clamp(20px,4vw,48px)}
 .cat-zone .kicker{color:var(--gold)}
 .cat-zone .sec-title{color:#f4e9d8}
 .cat-zone main{max-width:1180px;padding:26px 16px 0;scroll-margin-top:90px}
@@ -1141,6 +1142,7 @@ async function buildMarquee(){
       chunk.forEach((it,j)=>{if(urls[j])res.push({it,u:urls[j]})});
     }
   }
+  if(!admin&&res.length){try{const LG=['fr','en','es','ro','ru'];localStorage.setItem('md_autogal',JSON.stringify(res.filter(e=>e.it).map(e=>({url:e.u,caption:Object.fromEntries(LG.filter(l=>e.it.n&&e.it.n[l]).map(l=>[l,e.it.n[l]])),link:e.it.slug||e.it.id||''}))))}catch{}}
   const band=$('band');
   if(res.length<(admin?1:4)){band.hidden=true;return}
   band.hidden=false;
