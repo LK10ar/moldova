@@ -48,7 +48,7 @@ const COLS = {
     { k: 'publishedAt', t: 'date', l: 'Date de publication' },
     { k: 'when', t: 'i18n', l: 'Date / période affichée (événements)' } ] }
 };
-const BASE_KEYS = ['_id', '__v', 'createdAt', 'updatedAt', 'slug', 'status', 'cover', 'title', 'gallery', 'location', 'summary', 'videos', 'links', 'sub', 'w'];
+const BASE_KEYS = ['_id', '__v', 'createdAt', 'updatedAt', 'slug', 'status', 'cover', 'title', 'gallery', 'location', 'summary', 'videos', 'links', 'sub', 'w', 'trace'];
 const MENU = [
   { h: "Page d'accueil" }, { id: 'home', icon: '🏠', label: 'Accueil du site' },
   { h: 'Contenu' }, ...Object.entries(COLS).map(([id, c]) => ({ id, icon: c.icon, label: c.label })),
@@ -182,13 +182,13 @@ function openEditor(colId, doc) {
   const C = COLS[colId], isNew = !doc, d = doc || {};
   const handled = new Set([...BASE_KEYS, ...C.fields.map(f => f.k), ...(colId === 'news' ? ['body'] : [])]);
   const rest = {}; Object.keys(d).forEach(k => { if (!handled.has(k)) rest[k] = d[k]; });
-  ED = { col: colId, doc, dirty: false, slugTouched: !isNew, map: null, marker: null };
+  ED = { col: colId, doc, dirty: false, slugTouched: !isNew, map: null, marker: null, trk: parseGeo(doc && doc.trace), trkDirty: false, tmap: null, tlayer: null, codeEdited: false };
   const t = d.title || {}, loc = d.location || {};
   const veil = document.createElement('div'); veil.className = 'veil'; veil.id = 'veil';
   const dr = document.createElement('div'); dr.className = 'drawer'; dr.id = 'drawer'; dr.setAttribute('role', 'dialog'); dr.setAttribute('aria-modal', 'true');
   dr.innerHTML = `
   <div class="dh"><h3>${isNew ? 'Nouvelle fiche' : 'Modifier : ' + esc(t.fr || d.slug)}</h3><span class="dot hide" id="dot" title="Modifications non enregistrées"></span><button class="btn sm ico" id="dClose" aria-label="Fermer">✕</button></div>
-  <div class="tabs" id="dTabs">${[['gen', 'Général'], ['txt', 'Textes'], ['det', 'Détails'], ['med', 'Médias'], ['map', 'Carte'], ['adv', 'Avancé']].map(([k, l], i) => `<button type="button" data-t="${k}" class="${i ? '' : 'on'}">${l}</button>`).join('')}</div>
+  <div class="tabs" id="dTabs">${[['gen', 'Général'], ['txt', 'Textes'], ['det', 'Détails'], ['med', 'Médias'], ['map', 'Carte'], ['trk', 'Parcours'], ['adv', 'Avancé']].map(([k, l], i) => `<button type="button" data-t="${k}" class="${i ? '' : 'on'}">${l}</button>`).join('')}</div>
   <div class="db">
    <div class="pane on" data-p="gen">
     <div class="g2"><label class="f"><span>Statut</span><select data-f="status"><option value="draft" ${d.status !== 'published' ? 'selected' : ''}>Brouillon (invisible)</option><option value="published" ${d.status === 'published' ? 'selected' : ''}>Publié (visible)</option></select></label>
@@ -221,8 +221,22 @@ function openEditor(colId, doc) {
     <button type="button" class="btn" id="clrPt" style="margin-bottom:14px">Retirer le point</button></div>
     <div id="pick"></div>
    </div>
+   <div class="pane" data-p="trk">
+    <p class="hint">Trace un parcours : cherche une ville ou clique sur la carte pour ajouter les étapes. Elles sont reliées dans l'ordre de la liste (change l'ordre avec ↑ ↓, ou déplace un numéro sur la carte).</p>
+    <div class="srch"><input id="tkQ" placeholder="Rechercher une ville, un village, un lieu…" autocomplete="off"><button type="button" class="btn gold" id="tkGo">Chercher</button></div>
+    <div class="tkres hide" id="tkRes"></div>
+    <div id="tkMap"></div>
+    <div class="tools" style="margin:12px 0 0"><button type="button" class="btn" id="tkRoad" title="Calcule le tracé le long des routes (voiture)">🛣 Suivre les routes</button><button type="button" class="btn" id="tkLine">⟋ Lignes droites</button><button type="button" class="btn bad" id="tkClr">Tout effacer</button></div>
+    <p class="hint" id="tkInfo" style="margin:10px 0 0"></p>
+    <ol class="tklist" id="tkList"></ol>
+    <details class="card-sec" style="margin-top:16px"><summary>Code GeoJSON (avancé)</summary>
+     <p class="hint" style="margin-top:10px">Colle un GeoJSON (FeatureCollection avec une LineString et des Points) puis « Appliquer le code ». Les coordonnées sont [longitude, latitude].</p>
+     <textarea class="json" id="tkCode" spellcheck="false" rows="10" placeholder='{"type":"FeatureCollection","features":[…]}'></textarea>
+     <div class="tools"><button type="button" class="btn" id="tkApply">Appliquer le code</button><button type="button" class="btn" id="tkRefresh">↻ Régénérer depuis les étapes</button></div>
+    </details>
+   </div>
    <div class="pane" data-p="adv">
-    <p class="hint">Réservé aux champs qui n'ont pas de case dédiée (itinéraire détaillé, route…). Laisse tel quel si tu n'es pas sûr.</p>
+    <p class="hint">Réservé aux champs qui n'ont pas de case dédiée (itinéraire détaillé…). Astuce : tu peux coller ici directement un GeoJSON (FeatureCollection) : il devient le parcours de la fiche. Laisse tel quel si tu n'es pas sûr.</p>
     <textarea class="json" data-f="extra" spellcheck="false" placeholder="{}">${Object.keys(rest).length ? esc(JSON.stringify(rest, null, 2)) : ''}</textarea>
    </div>
   </div>
@@ -232,6 +246,8 @@ function openEditor(colId, doc) {
   drawGalPrev();
   dr.addEventListener('input', onEdInput); dr.addEventListener('change', onEdInput);
   dr.addEventListener('click', onEdClick);
+  dr.addEventListener('click', onTrkClick); dr.addEventListener('input', onTrkInput);
+  dr.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'tkQ') { e.preventDefault(); tkSearch(); } });
   veil.onclick = () => closeDrawer();
   $('dClose').onclick = $('dCancel').onclick = () => closeDrawer();
   $('dSave').onclick = saveEditor;
@@ -257,6 +273,7 @@ function onEdClick(e) {
     document.querySelectorAll('#dTabs button').forEach(b => b.classList.toggle('on', b === tb));
     document.querySelectorAll('#drawer .pane').forEach(p => p.classList.toggle('on', p.dataset.p === tb.dataset.t));
     if (tb.dataset.t === 'map') initPicker();
+    if (tb.dataset.t === 'trk') initTrk();
     return;
   }
   const lb = e.target.closest('[data-langs] [data-l]');
@@ -274,6 +291,7 @@ function closeDrawer(force) {
   if (!ED) return;
   if (!force && ED.dirty && !confirm('Des modifications ne sont pas enregistrées. Fermer quand même ?')) return;
   if (ED.map) { try { ED.map.remove(); } catch {} }
+  if (ED.tmap) { try { ED.tmap.remove(); } catch {} }
   ED = null; const v = $('veil'), d = $('drawer'); if (v) v.remove(); if (d) d.remove();
   document.body.style.overflow = '';
 }
@@ -281,6 +299,152 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if ($('modalBox')) closeModal(); else closeDrawer(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { if (ED) { e.preventDefault(); saveEditor(); } else if (S.view === 'home' && S.dirty) { e.preventDefault(); saveHome(); } }
 });
+
+/* --- parcours : étapes, recherche de ville, tracé --- */
+const isNum = v => typeof v === 'number' && isFinite(v);
+const samePath = (a, b) => a.length === b.length && a.every((p, i) => Math.abs(p[0] - b[i][0]) < 1e-6 && Math.abs(p[1] - b[i][1]) < 1e-6);
+function parseGeo(g) {
+  const out = { steps: [], line: null, mode: 'line', dropped: false, res: [] };
+  if (!g || typeof g !== 'object') return out;
+  const feats = g.type === 'FeatureCollection' ? (g.features || []) : g.type === 'Feature' ? [g] : g.type ? [{ type: 'Feature', properties: {}, geometry: g }] : [];
+  let line = [];
+  feats.forEach(f => {
+    const geo = f && f.geometry, p = (f && f.properties) || {}; if (!geo || !Array.isArray(geo.coordinates)) return;
+    if (geo.type === 'Point' && isNum(geo.coordinates[0]) && isNum(geo.coordinates[1]))
+      out.steps.push({ name: String(p.name || p.title || 'Étape ' + (out.steps.length + 1)), type: String(p.type || p.description || ''), lat: geo.coordinates[1], lng: geo.coordinates[0] });
+    else if (geo.type === 'LineString') line = line.concat(geo.coordinates);
+    else if (geo.type === 'MultiLineString') geo.coordinates.forEach(c => { line = line.concat(c); });
+  });
+  line = line.filter(c => Array.isArray(c) && isNum(c[0]) && isNum(c[1])).map(c => [c[1], c[0]]);
+  if (!out.steps.length && line.length > 1) { const a = line[0], b = line[line.length - 1]; out.steps = [{ name: 'Départ', type: '', lat: a[0], lng: a[1] }, { name: 'Arrivée', type: '', lat: b[0], lng: b[1] }]; }
+  if (line.length > 1 && !samePath(line, out.steps.map(s => [s.lat, s.lng]))) { out.line = line; out.mode = 'custom'; }
+  return out;
+}
+function simplifyPath(pts, tol) {
+  if (pts.length < 3) return pts;
+  const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+  const dist = (p, a, b) => { const dx = b[1] - a[1], dy = b[0] - a[0]; if (!dx && !dy) return Math.hypot(p[1] - a[1], p[0] - a[0]); let t = ((p[1] - a[1]) * dx + (p[0] - a[0]) * dy) / (dx * dx + dy * dy); t = Math.max(0, Math.min(1, t)); return Math.hypot(p[1] - (a[1] + t * dx), p[0] - (a[0] + t * dy)); };
+  const stack = [[0, pts.length - 1]];
+  while (stack.length) {
+    const [s, e] = stack.pop(); let mx = 0, idx = -1;
+    for (let i = s + 1; i < e; i++) { const d = dist(pts[i], pts[s], pts[e]); if (d > mx) { mx = d; idx = i; } }
+    if (mx > tol && idx > 0) { keep[idx] = 1; stack.push([s, idx], [idx, e]); }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+const kmBetween = (a, b) => { const R = 6371, r = Math.PI / 180, dLa = (b[0] - a[0]) * r, dLo = (b[1] - a[1]) * r, x = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); };
+const pathKm = p => { let d = 0; for (let i = 1; i < p.length; i++) d += kmBetween(p[i - 1], p[i]); return d; };
+function buildGeo() {
+  const T = ED.trk, st = T.steps; if (!st.length) return null;
+  const path = (T.line && T.line.length > 1) ? T.line : st.map(s => [s.lat, s.lng]);
+  const t = F('title.fr'), title = (t && t.value.trim()) || 'Parcours';
+  const feats = [];
+  if (st.length > 1) feats.push({ type: 'Feature', properties: { name: title, description: "Tracé global de l'itinéraire reliant les étapes", mode: T.line ? (T.mode === 'road' ? 'road' : 'custom') : 'line' }, geometry: { type: 'LineString', coordinates: path.map(p => [+p[1].toFixed(6), +p[0].toFixed(6)]) } });
+  st.forEach((s, i) => feats.push({ type: 'Feature', properties: { name: s.name, type: s.type, order: i + 1 }, geometry: { type: 'Point', coordinates: [+(+s.lng).toFixed(6), +(+s.lat).toFixed(6)] } }));
+  return { type: 'FeatureCollection', features: feats };
+}
+function geomChanged() { const T = ED.trk; if (T.line) { T.line = null; T.dropped = true; } ED.trkDirty = true; markDirty(); }
+function syncCode(force) { const c = $('tkCode'); if (!c || !ED) return; if (ED.codeEdited && !force) return; const g = buildGeo(); c.value = g ? JSON.stringify(g, null, 2) : ''; }
+function renderTrk(fit) {
+  if (!ED || !$('tkList')) return;
+  const T = ED.trk, st = T.steps, path = (T.line && T.line.length > 1) ? T.line : st.map(s => [s.lat, s.lng]);
+  $('tkList').innerHTML = st.length ? st.map((s, i) => `<li class="tks" data-i="${i}"><span class="n">${i + 1}</span>
+    <div class="tkf"><input data-tk="name" value="${esc(s.name)}" placeholder="Nom de l'étape" aria-label="Nom de l'étape ${i + 1}"><input data-tk="type" value="${esc(s.type)}" placeholder="Description (ex : Vestiges du Mur inférieur)" aria-label="Description de l'étape ${i + 1}"></div>
+    <div class="tka"><button type="button" class="btn sm ico" data-tkb="up" ${i ? '' : 'disabled'} aria-label="Monter">↑</button><button type="button" class="btn sm ico" data-tkb="down" ${i < st.length - 1 ? '' : 'disabled'} aria-label="Descendre">↓</button><button type="button" class="btn sm bad ico" data-tkb="del" aria-label="Supprimer l'étape">✕</button></div>
+    <small class="co">${(+s.lat).toFixed(4)}, ${(+s.lng).toFixed(4)}</small></li>`).join('') : '<li class="tk-empty">Aucune étape pour l\'instant. Cherche une ville ci-dessus ou clique sur la carte.</li>';
+  const kind = T.line ? (T.mode === 'road' ? 'suit les routes' : 'tracé personnalisé') : 'lignes droites';
+  $('tkInfo').innerHTML = st.length ? `${st.length} étape${st.length > 1 ? 's' : ''} · ${kind}${st.length > 1 ? ' · ≈ ' + pathKm(path).toFixed(0) + ' km' : ''}${T.dropped ? '<br><b style="color:var(--gold)">Les étapes ont changé : le tracé est repassé en lignes droites. Clique sur « Suivre les routes » pour le recalculer.</b>' : ''}` : '';
+  syncCode();
+  if (!ED.tmap || !window.L) return;
+  const L = window.L; ED.tlayer.clearLayers();
+  if (path.length > 1) { L.polyline(path, { color: '#000', weight: 8, opacity: .35, interactive: false }).addTo(ED.tlayer); L.polyline(path, { color: '#ffc83d', weight: 4, opacity: .95, dashArray: T.line ? null : '8 6' }).addTo(ED.tlayer); }
+  st.forEach((s, i) => {
+    const mk = L.marker([s.lat, s.lng], { draggable: true, icon: L.divIcon({ className: '', html: `<div class="tkpin">${i + 1}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(ED.tlayer);
+    mk.bindTooltip(s.name || 'Étape ' + (i + 1));
+    mk.on('dragend', ev => { const p = ev.target.getLatLng(); s.lat = p.lat; s.lng = p.lng; geomChanged(); renderTrk(false); });
+  });
+  if (fit && st.length) { try { ED.tmap.fitBounds(path, { padding: [40, 40], maxZoom: 12 }); } catch {} }
+}
+async function initTrk() {
+  if (!ED) return; renderTrk(false);
+  const el = $('tkMap'); if (!el) return;
+  if (ED.tmap) { setTimeout(() => ED.tmap && ED.tmap.invalidateSize(), 60); return; }
+  try { await loadLeaflet(); } catch { el.innerHTML = '<p class="hint" style="padding:16px">Carte indisponible (réseau) : tu peux quand même utiliser la recherche et le code GeoJSON.</p>'; return; }
+  if (!ED || ED.tmap) return;
+  const L = window.L; ED.tmap = L.map(el).setView([47.0, 28.6], 7);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(ED.tmap);
+  ED.tlayer = L.layerGroup().addTo(ED.tmap);
+  ED.tmap.on('click', e => tkAdd(e.latlng.lat, e.latlng.lng, 'Étape ' + (ED.trk.steps.length + 1), '', true));
+  renderTrk(true); setTimeout(() => ED && ED.tmap && ED.tmap.invalidateSize(), 150);
+}
+function tkAdd(lat, lng, name, type, reverse) {
+  const step = { name, type: type || '', lat: +lat, lng: +lng };
+  ED.trk.steps.push(step); geomChanged(); renderTrk(false);
+  if (ED.tmap) ED.tmap.panTo([step.lat, step.lng]);
+  if (reverse) tkRev(step);
+}
+async function tkRev(step) {
+  try {
+    const j = await (await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=fr&lat=${step.lat}&lon=${step.lng}`)).json();
+    const a = j.address || {}, nm = a.village || a.town || a.city || a.hamlet || a.municipality || j.name;
+    if (ED && nm && /^Étape \d+$/.test(step.name) && ED.trk.steps.includes(step)) { step.name = nm; renderTrk(false); }
+  } catch {}
+}
+async function tkSearch() {
+  if (!ED) return; const q = ($('tkQ').value || '').trim(); if (q.length < 2) return;
+  const box = $('tkRes'); box.classList.remove('hide'); box.innerHTML = '<div class="tkr dim">Recherche…</div>';
+  try {
+    const j = await (await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=fr&viewbox=26.4,48.6,30.3,45.3&q=' + encodeURIComponent(q))).json();
+    if (!ED) return; ED.trk.res = j;
+    box.innerHTML = j.length ? j.map((x, i) => `<button type="button" class="tkr" data-tkr="${i}"><b>${esc(x.name || String(x.display_name).split(',')[0])}</b><span>${esc(x.display_name)}</span><em>＋ Ajouter</em></button>`).join('') : '<div class="tkr dim">Aucun résultat. Essaie un autre nom.</div>';
+  } catch { box.innerHTML = '<div class="tkr dim">Recherche indisponible. Tu peux cliquer directement sur la carte.</div>'; }
+}
+async function tkRoad() {
+  const T = ED.trk, st = T.steps;
+  if (st.length < 2) { toast('Ajoute au moins 2 étapes.', 'err'); return; }
+  if (st.length > 40) { toast('40 étapes maximum pour le calcul sur route.', 'err'); return; }
+  const btn = $('tkRoad'); btn.disabled = true; const lbl = btn.textContent; btn.textContent = 'Calcul…';
+  try {
+    const c = st.map(s => (+s.lng).toFixed(6) + ',' + (+s.lat).toFixed(6)).join(';');
+    const j = await (await fetch('https://router.project-osrm.org/route/v1/driving/' + c + '?overview=full&geometries=geojson')).json();
+    if (j.code !== 'Ok' || !j.routes || !j.routes[0]) throw new Error(j.message || 'aucun itinéraire trouvé');
+    T.line = simplifyPath(j.routes[0].geometry.coordinates.map(p => [p[1], p[0]]), 0.0002); T.mode = 'road'; T.dropped = false;
+    ED.trkDirty = true; markDirty(); renderTrk(false); toast('Tracé calculé sur les routes');
+  } catch (e) { toast('Calcul impossible (' + e.message + '). Le tracé reste en lignes droites.', 'err'); }
+  finally { btn.disabled = false; btn.textContent = lbl; }
+}
+function tkApply() {
+  const raw = ($('tkCode').value || '').trim();
+  if (!raw) { ED.trk.steps = []; ED.trk.line = null; ED.trkDirty = true; ED.codeEdited = false; markDirty(); renderTrk(false); return; }
+  let g; try { g = JSON.parse(raw); } catch { toast('GeoJSON invalide : vérifie les virgules et les accolades.', 'err'); return; }
+  const p = parseGeo(g); if (!p.steps.length) { toast('Aucune étape (Point) ni ligne trouvée dans ce GeoJSON.', 'err'); return; }
+  Object.assign(ED.trk, { steps: p.steps, line: p.line, mode: p.mode, dropped: false }); ED.trkDirty = true; ED.codeEdited = false; markDirty(); renderTrk(true); toast(p.steps.length + ' étape(s) chargée(s)');
+}
+function onTrkClick(e) {
+  if (!ED) return; const T = ED.trk;
+  const b = e.target.closest('[data-tkb]');
+  if (b) {
+    const i = +b.closest('.tks').dataset.i, k = b.dataset.tkb;
+    if (k === 'up' && i > 0) [T.steps[i - 1], T.steps[i]] = [T.steps[i], T.steps[i - 1]];
+    else if (k === 'down' && i < T.steps.length - 1) [T.steps[i + 1], T.steps[i]] = [T.steps[i], T.steps[i + 1]];
+    else if (k === 'del') T.steps.splice(i, 1);
+    geomChanged(); renderTrk(false); return;
+  }
+  const r = e.target.closest('[data-tkr]');
+  if (r) { const x = (T.res || [])[+r.dataset.tkr]; if (x) { tkAdd(+x.lat, +x.lon, String(x.name || String(x.display_name).split(',')[0]).trim(), '', false); $('tkRes').classList.add('hide'); $('tkQ').value = ''; if (ED.tmap) ED.tmap.setView([+x.lat, +x.lon], Math.max(ED.tmap.getZoom(), 11)); } return; }
+  const bt = e.target.closest('button'), id = bt && bt.id;
+  if (id === 'tkGo') tkSearch();
+  else if (id === 'tkRoad') tkRoad();
+  else if (id === 'tkLine') { if (T.line) { T.line = null; T.dropped = false; ED.trkDirty = true; markDirty(); renderTrk(false); } }
+  else if (id === 'tkClr') { if (T.steps.length && confirm('Effacer toutes les étapes du parcours ?')) { T.steps = []; T.line = null; T.dropped = false; ED.trkDirty = true; markDirty(); renderTrk(false); } }
+  else if (id === 'tkApply') tkApply();
+  else if (id === 'tkRefresh') { ED.codeEdited = false; syncCode(true); }
+}
+function onTrkInput(e) {
+  if (!ED) return; const t = e.target;
+  if (t.dataset && t.dataset.tk) { const li = t.closest('.tks'), s = li && ED.trk.steps[+li.dataset.i]; if (!s) return; s[t.dataset.tk] = t.value; ED.trkDirty = true; markDirty(); syncCode(); }
+  if (t.id === 'tkCode') ED.codeEdited = true;
+}
 
 /* --- sélecteur de position (Leaflet chargé à la demande) --- */
 let LP;
@@ -317,7 +481,12 @@ function collect() {
   if (!title.fr) throw new Error('Le titre en français est obligatoire.');
   let slug = val('slug') || slugify(title.fr);
   if (!slug) throw new Error("L'identifiant (slug) est obligatoire.");
+  let traceAdv = null;
+  if (extra && typeof extra.type === 'string' && /^(FeatureCollection|Feature|LineString|MultiLineString|Point)$/.test(extra.type)) { traceAdv = extra; extra = {}; }
   const body = { ...extra, slug, status: F('status').value, title, cover: val('cover') || (editing ? '' : undefined) };
+  if (traceAdv) body.trace = traceAdv;
+  else if (ED.trkDirty) { const g = buildGeo(); if (g) body.trace = g; else if (editing) body.trace = null; }
+  if (body.trace && JSON.stringify(body.trace).length > 150000) throw new Error('Parcours trop lourd (plus de 150 Ko) : retire des étapes ou repasse en lignes droites.');
   body.gallery = F('gallery').value.split(/\s+/).filter(Boolean);
   body.videos = F('videos').value.split('\n').map(s => s.trim()).filter(Boolean);
   body.links = F('links').value.split('\n').map(s => s.trim()).filter(Boolean).map(s => { const i = s.lastIndexOf('|'); return i < 0 ? { label: s, url: s } : { label: s.slice(0, i).trim(), url: s.slice(i + 1).trim() }; }).filter(l => isUrl(l.url));
