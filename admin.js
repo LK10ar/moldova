@@ -394,10 +394,28 @@ function drawHomeBody() {
   drawVideo(box);
 }
 /* --- galerie --- */
+const readAuto = () => { try { const v = JSON.parse(localStorage.getItem('md_autogal') || '[]'); return Array.isArray(v) ? v.filter(g => g && isUrl(g.url)) : []; } catch { return []; } };
+async function importAuto() {
+  let list = readAuto();
+  if (!list.length) {
+    toast('Chargement des photos du site…');
+    const f = document.createElement('iframe'); f.src = './index.html'; f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    f.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:900px;border:0;opacity:0;pointer-events:none';
+    document.body.append(f);
+    for (let i = 0; i < 40 && !list.length; i++) { await new Promise(r => setTimeout(r, 500)); list = readAuto(); }
+    f.remove();
+  }
+  if (!list.length) { toast("Impossible de lire les photos : ouvre le site dans ce navigateur (bouton « Voir le site ») puis réessaie.", 'err'); return; }
+  const have = new Set(S.home.gallery.map(g => g.url)); let n = 0;
+  list.forEach(g => { if (!have.has(g.url)) { S.home.gallery.push({ url: g.url, caption: g.caption || {}, link: g.link || '' }); n++; } });
+  homeDirty(); drawGallery($('homeBody'));
+  toast(n ? n + ' photo(s) reprise(s) : modifie, déplace ou retire-les, puis « Enregistrer l\'accueil »' : 'Ces photos sont déjà dans la galerie.');
+}
 function drawGallery(box) {
   const G = S.home.gallery;
-  box.innerHTML = `<p class="hint">Fais glisser les images pour changer leur ordre (ou utilise ◀ ▶ sur téléphone). Si la galerie est vide, le site choisit tout seul des photos parmi tes fiches.</p>
-  <div class="tools"><button class="btn gold" data-g="add">＋ Ajouter une image</button><button class="btn" data-g="bulk">Coller plusieurs URLs</button><button class="btn" data-g="pick">Choisir parmi mes fiches</button></div>
+  box.innerHTML = `<p class="hint">Fais glisser les images pour changer leur ordre (ou utilise ◀ ▶ sur téléphone). Si la galerie est vide, le site choisit tout seul des photos parmi tes fiches (c'est ce que tu vois en ce moment sur le site).</p>
+  ${G.length ? '' : `<div class="card-sec" style="border-color:var(--gold)"><h5>Le site affiche des photos automatiques</h5><p class="hint" style="margin:0 0 12px">Pour les modifier, les retirer ou les déplacer, reprends d'abord les photos actuelles : elles apparaissent ici et tu en fais ce que tu veux.</p><button class="btn gold" data-g="auto">↧ Reprendre les photos actuelles du site</button></div>`}
+  <div class="tools"><button class="btn gold" data-g="add">＋ Ajouter une image</button><button class="btn" data-g="bulk">Coller plusieurs URLs</button><button class="btn" data-g="pick">Choisir parmi mes fiches</button><button class="btn" data-g="auto" title="Copie ici les photos que le site affiche actuellement">↧ Reprendre les photos du site</button></div>
   <div class="ggrid" id="ggrid">${G.map((g, i) => `<div class="gitem" draggable="true" data-i="${i}">
     <div class="gthumb" ${bg(g.url)}><span class="n">${i + 1}</span><span class="h" title="Glisser pour déplacer">⋮⋮</span></div>
     <div class="gcap ${(g.caption && (g.caption.fr || Object.values(g.caption)[0])) ? '' : 'none'}">${esc((g.caption && (g.caption.fr || Object.values(g.caption)[0])) || 'Sans légende')}</div>
@@ -418,6 +436,7 @@ document.addEventListener('click', async e => {
   else if (a === 'add') galleryModal(-1);
   else if (a === 'bulk') bulkModal();
   else if (a === 'pick') pickModal();
+  else if (a === 'auto') importAuto();
 });
 let dragFrom = -1;
 document.addEventListener('dragstart', e => { const it = e.target.closest && e.target.closest('.gitem'); if (!it) return; dragFrom = +it.dataset.i; it.classList.add('drag'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(dragFrom)); } catch {} });
