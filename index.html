@@ -377,6 +377,12 @@ header{background:var(--bg)}
 #secs{display:flex;flex-direction:column}
 [data-off="1"]{display:none!important}
 html.lightmode{color-scheme:light}
+
+.rp{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ffd35c,#e0952c);color:#1a1204;font:800 14px system-ui,sans-serif;border:2px solid #fff;box-shadow:0 4px 12px #000a}
+.rsteps{counter-reset:s;list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.rsteps li{counter-increment:s;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:10px 12px 10px 46px;position:relative;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff1c}
+.rsteps li::before{content:counter(s);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ffd35c,#e0952c);color:#1a1204;font:800 13px system-ui}
+.rsteps b{font-weight:700}.rsteps span{flex-basis:100%;font-size:13px;opacity:.75}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
 </head><body class="on-hero">
@@ -703,12 +709,23 @@ async function detail(it,lg){
 
 /* ---------- Données du back-office (API Render) ---------- */
 const SUBMAP={randonnee:'rando',plongee:'plongee',bivouac:'bivouac',artisanat:'artisanat',urbain:'urbain'};
+function parseTrace(t){
+ if(!t||typeof t!=='object')return null;
+ const fs=t.type==='FeatureCollection'?(t.features||[]):t.type==='Feature'?[t]:[];
+ const steps=[];let line=[];
+ fs.forEach(f=>{const g=f&&f.geometry,p=(f&&f.properties)||{};if(!g||!g.coordinates)return;
+  if(g.type==='Point'&&g.coordinates.length>1)steps.push([String(p.name||''),g.coordinates[1],g.coordinates[0],String(p.type||p.description||'')]);
+  else if(g.type==='LineString')line=line.concat(g.coordinates);
+  else if(g.type==='MultiLineString')g.coordinates.forEach(c=>{line=line.concat(c)})});
+ line=line.filter(c=>c&&c.length>1).map(c=>[c[1],c[0]]);
+ return steps.length||line.length?{steps,line}:null;
+}
 function fromApi(cat,x){
- const loc=x.location||{};
+ const loc=x.location||{};const tr=parseTrace(x.trace);
  return{id:'api'+cat+x._id,cat,api:1,
   sub:x.sub||(cat==='c'?x.region:cat==='a'?(SUBMAP[x.category]||x.category):cat==='g'?x.type:cat==='h'||cat==='t'?x.kind:''),
   slug:x.slug,seeded:x.seeded,reg:x.reg,when:x.when,w:x.w||null,lat:loc.lat,lng:loc.lng,n:x.title||{},d:x.summary||{},cover:x.cover,gallery:x.gallery||[],
-  days:x.days,tr:x.transport,lg:x.lodging||[],st:x.st||'',it:x.itinerary,body:x.body,date:x.publishedAt,videos:x.videos,links:x.links,auto:x.auto,route:x.route&&x.route.start&&x.route.end?[[x.route.start.name||'',x.route.start.lat,x.route.start.lng],[x.route.end.name||'',x.route.end.lat,x.route.end.lng]]:null};
+  days:x.days,tr:x.transport,lg:x.lodging||[],st:x.st||'',it:x.itinerary,body:x.body,date:x.publishedAt,videos:x.videos,links:x.links,auto:x.auto,line:(tr&&tr.line.length>1)?tr.line:null,route:(tr&&tr.steps.length>1)?tr.steps:(x.route&&x.route.start&&x.route.end?[[x.route.start.name||'',x.route.start.lat,x.route.start.lng],[x.route.end.name||'',x.route.end.lat,x.route.end.lng]]:null)};
 }
 async function loadApi(){
  ITEMS.splice(0,ITEMS.length,...ITEMS.filter(i=>!i.api));
@@ -816,7 +833,7 @@ function openM(it,push=true){
   $('gs').hidden=false;$('gx').innerHTML=all.map(u=>`<img src="${esc(u)}" loading="lazy" alt="${esc(nameOf(it))}">`).join('');
  };
  const showMap=(lat,lng)=>{
-  if(it.route&&it.route.length>1&&tok===mtok){$('ms').hidden=false;routeMap(it.route,$('mx'),tok);return}
+  if(it.route&&it.route.length>1&&tok===mtok){$('ms').hidden=false;routeMap(it.route,$('mx'),tok,it.line);return}
    if(lat==null||lng==null||tok!==mtok)return;
   const bb=[lng-.25,lat-.15,lng+.25,lat+.15].map(n=>n.toFixed(4)).join('%2C');
   $('ms').hidden=false;
@@ -870,13 +887,19 @@ Object.assign(VT,{ro:'Videoclipuri',ru:'Видео'});Object.assign(LT,{ro:'Link
 Object.assign(SE,{ro:['Start','Sosire','Traseu orientativ'],ru:['Старт','Финиш','Ориентировочный маршрут']});
 const WL={fr:'Régions viticoles',en:'Wine regions',es:'Regiones vinícolas',ro:'Regiuni viticole',ru:'Винодельческие регионы'};
 let LP;const loadL=()=>LP||(LP=new Promise((ok,ko)=>{const B='https://cdnjs.cloudflare.com/ajax/libs/';const css=h=>{const c=document.createElement('link');c.rel='stylesheet';c.href=B+h;document.head.append(c)};const js=(s,f,e)=>{const x=document.createElement('script');x.src=B+s;x.onload=f;x.onerror=e;document.head.append(x)};css('leaflet/1.9.4/leaflet.min.css');css('leaflet.markercluster/1.5.3/MarkerCluster.css');css('leaflet.markercluster/1.5.3/MarkerCluster.Default.css');js('leaflet/1.9.4/leaflet.min.js',()=>js('leaflet.markercluster/1.5.3/leaflet.markercluster.js',ok,ok),ko)}));
-async function routeMap(pts,el,tok){
+async function routeMap(pts,el,tok,line){
  el.innerHTML='<div style="height:340px;border-radius:12px"></div>';
  try{await loadL();if(tok!==mtok)return;const L=window.L,m=L.map(el.firstChild,{scrollWheelZoom:false});
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m);
-  const ll=pts.map(p=>[p[1],p[2]]);L.polyline(ll,{color:'#8c2340',weight:4,dashArray:'8 6'}).addTo(m);
-  pts.forEach((p,i)=>L.marker(ll[i]).addTo(m).bindPopup(`<b>${i===0?(SE[lang]||SE.en)[0]:i===pts.length-1?(SE[lang]||SE.en)[1]:''}</b><br>${esc(p[0])}`));
-  m.fitBounds(ll,{padding:[30,30]});el.insertAdjacentHTML('beforeend',`<p class="src">${(SE[lang]||SE.en)[2]}</p>`);
+  const gold=(getComputedStyle(document.documentElement).getPropertyValue('--gold')||'#ffc83d').trim();
+  const ll=pts.map(p=>[p[1],p[2]]),path=(line&&line.length>1)?line:ll,multi=pts.length>2;
+  L.polyline(path,{color:'#000',weight:8,opacity:.35,interactive:false}).addTo(m);
+  L.polyline(path,{color:multi?gold:'#8c2340',weight:4,opacity:.95,dashArray:(line&&line.length>1)?null:'8 6'}).addTo(m);
+  pts.forEach((p,i)=>{
+   const mk=multi?L.marker(ll[i],{icon:L.divIcon({className:'',html:`<div class="rp">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-14]})}):L.marker(ll[i]);
+   mk.addTo(m).bindPopup(multi?`<b>${i+1}. ${esc(p[0])}</b>${p[3]?'<br>'+esc(p[3]):''}`:`<b>${i===0?(SE[lang]||SE.en)[0]:i===pts.length-1?(SE[lang]||SE.en)[1]:''}</b><br>${esc(p[0])}`)});
+  m.fitBounds(path,{padding:[30,30]});
+  el.insertAdjacentHTML('beforeend',multi?`<ol class="rsteps">${pts.map(p=>`<li><b>${esc(p[0])}</b>${p[3]?`<span>${esc(p[3])}</span>`:''}</li>`).join('')}</ol>`:`<p class="src">${(SE[lang]||SE.en)[2]}</p>`);
  }catch{el.innerHTML=''}
 }
 const MT={fr:['Carte interactive','Carte des routes du vin (PDF)','Voir la fiche'],en:['Interactive map','Wine routes map (PDF)','View details'],es:['Mapa interactivo','Mapa de rutas del vino (PDF)','Ver ficha'],ro:['Hartă interactivă','Harta drumurilor vinului (PDF)','Vezi fișa'],ru:['Интерактивная карта','Карта винных маршрутов (PDF)','Подробнее']};
@@ -897,6 +920,12 @@ async function initMap(){
    mk.bindPopup(`<img class="pp" alt="" hidden><b>${esc(nameOf(i))}</b><br>${esc(cut(descOf(i),110))}<br><a href="#" data-open="${esc(i.id)}">${esc(m[2])} →</a>`);
   mk.getPopup().options.className='mdpop';mk.getPopup().options.maxWidth=260;
    (BL[i.cat]=BL[i.cat]||(L.markerClusterGroup?L.markerClusterGroup({maxClusterRadius:38}):L.layerGroup())).addLayer(mk);
+ });
+ ITEMS.filter(i=>i.route&&i.route.length>2&&MC[i.cat]).forEach(i=>{
+  const gold=(getComputedStyle(document.documentElement).getPropertyValue('--gold')||'#ffc83d').trim(),path=(i.line&&i.line.length>1)?i.line:i.route.map(p=>[p[1],p[2]]);
+  const g=(BL[i.cat]=BL[i.cat]||(L.markerClusterGroup?L.markerClusterGroup({maxClusterRadius:38}):L.layerGroup()));
+  const pl=L.polyline(path,{color:gold,weight:3,opacity:.85,dashArray:'7 6'});pl.bindTooltip(nameOf(i),{sticky:true});pl.on('click',()=>openM(i));g.addLayer(pl);
+  i.route.forEach(p=>g.addLayer(L.circleMarker([p[1],p[2]],{radius:4,color:'#fff',weight:1.5,fillColor:gold,fillOpacity:1}).bindTooltip(p[0]||'')));
  });
  Object.values(BL).forEach(g=>g.addTo(BM));
 }
