@@ -294,7 +294,7 @@ async function initPicker() {
   const el = $('pick'); try { await loadLeaflet(); } catch { el.innerHTML = '<p class="hint" style="padding:16px">Carte indisponible : saisis les coordonnées à la main.</p>'; return; }
   if (!ED || ED.map) return;
   const L = window.L; ED.map = L.map(el).setView([47.0, 28.6], 7);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap · © CARTO' }).addTo(ED.map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(ED.map);
   ED.map.on('click', e => { setPoint(e.latlng.lat, e.latlng.lng); markDirty(); });
   fromInputs(); setTimeout(() => ED && ED.map && ED.map.invalidateSize(), 150);
 }
@@ -504,9 +504,9 @@ document.addEventListener('click', e => {
 });
 
 /* --- apparence : couleurs, polices, mode --- */
-const TH0 = { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#0b3a35', mode: 'dark', ff: 'Playfair Display', fb: 'Georgia' };
+const TH0 = { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#151d52', mode: 'dark', ff: 'Playfair Display', fb: 'Georgia' };
 const PRESETS = [
-  { n: 'Nuit & or', t: { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#0b3a35' } },
+  { n: 'Nuit & or', t: { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#151d52' } },
   { n: 'Vignoble', t: { p1: '#3aa86a', ac: '#f0c36d', bg: '#08140e', cat: '#0d2118', ft: '#0f2a1d' } },
   { n: 'Azur & sable', t: { p1: '#1fa3d6', ac: '#f2d49b', bg: '#06141c', cat: '#0a2230', ft: '#0a2c38' } },
   { n: 'Violet nuit', t: { p1: '#8b5cf6', ac: '#fbbf24', bg: '#0d0a1c', cat: '#150f2e', ft: '#1d1245' } },
