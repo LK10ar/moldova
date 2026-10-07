@@ -391,6 +391,12 @@ footer.sf{margin:0!important;border-radius:0!important;background:var(--ft,var(-
 .g-city{font-size:11px;padding:4px 9px;background:#000b}
 .g-attr{position:absolute;left:8px;bottom:4px;font:10px/1 system-ui,sans-serif;color:#ffffffb0;opacity:0;transition:opacity .3s;pointer-events:none;text-shadow:0 1px 3px #000}
 .g-attr.on{opacity:1}
+
+/* UN SEUL FOND, sans aucune coupure : même couleur pleine du catalogue partout (sauf header vidéo et planète) */
+html:not(.lightmode) body{background:var(--cat)}
+html:not(.lightmode) .statement,html:not(.lightmode) .stack,html:not(.lightmode) .band,html:not(.lightmode) .cat-zone{background:transparent!important}
+html:not(.lightmode) footer.sf{background:var(--ft,transparent)!important;border-top:0!important}
+html:not(.lightmode) .cat-zone::before,html:not(.lightmode) .cat-zone::after,html:not(.lightmode) .sf::before{display:none!important}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
 </head><body class="on-hero">
