@@ -231,7 +231,7 @@ footer.sf{margin:-44px 0 0;padding:0;border:0;border-radius:44px 44px 0 0;backgr
 .sf-col a:hover,.sf-col button:hover{color:var(--gold);transform:translateX(4px)}
 .sf-brand{display:flex;align-items:center;margin-top:clamp(18px,3vw,46px)}
 .sf-mark{position:relative;flex:0 0 clamp(52px,6vw,110px);aspect-ratio:1;margin-right:clamp(12px,1.6vw,26px);overflow:hidden;border-radius:50%;background:#f4ead6}
-.sf-mark::before{content:"";position:absolute;inset:-18%;background:var(--ft);clip-path:polygon(0 20%,100% 8%,100% 19%,0 31%,0 43%,100% 31%,100% 42%,0 54%,0 66%,100% 54%,100% 65%,0 77%)}
+.sf-mark::before{content:"";position:absolute;inset:-18%;background:var(--ft,var(--cat));clip-path:polygon(0 20%,100% 8%,100% 19%,0 31%,0 43%,100% 31%,100% 42%,0 54%,0 66%,100% 54%,100% 65%,0 77%)}
 .sf-word{display:block;flex:1 1 auto;min-width:0;font:600 100px/.8 var(--ff);letter-spacing:-.045em;white-space:nowrap;background:linear-gradient(180deg,#fff3d6 10%,var(--gold) 95%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding-bottom:.06em}
 .sf .sf-legal .in{max-width:none;margin:clamp(14px,1.4vw,24px) 0 0;display:flex;flex-wrap:wrap;gap:8px 18px;font:11px/1.35 system-ui,sans-serif;color:#f4ead699}
 .sf .sf-legal a{color:inherit;text-decoration:none}
@@ -372,7 +372,7 @@ header{background:var(--bg)}
 .sf::before{background:radial-gradient(55% 45% at 50% 0%,color-mix(in srgb,var(--gold) 15%,transparent),#0000 70%),radial-gradient(45% 45% at 95% 100%,#4a7dff33,#0000 70%)}
 
 /* ===== valeurs par défaut du thème (l'admin peut les changer) ===== */
-:root{--gold:#ffc83d;--p1:#2f6df6;--p1d:#1c4399;--cat:#0b1a33;--ft:#151d52;--fbu:system-ui}
+:root{--gold:#ffc83d;--p1:#2f6df6;--p1d:#1c4399;--cat:#0b1a33;--fbu:system-ui}
 .meta,.ds,.tag,.src,.sk,.lgd,.facts b,.stg span,.chip,#q,.btn,.kicker,.eyebrow,.hero-stats span,.mq-tile b,.stack-tag,.stack-card p,.sf-col a,.sf-col button,.sf .sf-legal .in,.fact b,.fact span,.earth p,.cb2,.mh-k,.mact a{font-family:var(--fbu),sans-serif}
 #secs{display:flex;flex-direction:column}
 [data-off="1"]{display:none!important}
@@ -383,6 +383,14 @@ html.lightmode{color-scheme:light}
 .rsteps li{counter-increment:s;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:10px 12px 10px 46px;position:relative;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff1c}
 .rsteps li::before{content:counter(s);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ffd35c,#e0952c);color:#1a1204;font:800 13px system-ui}
 .rsteps b{font-weight:700}.rsteps span{flex-basis:100%;font-size:13px;opacity:.75}
+
+/* fonds unifiés : tout le site (hors vidéo du header et planète) a le fond du catalogue */
+.statement,.stack,.band{background-color:var(--cat);background-image:radial-gradient(50% 40% at 8% 18%,color-mix(in srgb,var(--p1) 20%,transparent),transparent 70%),radial-gradient(45% 35% at 94% 82%,color-mix(in srgb,var(--gold) 9%,transparent),transparent 70%)}
+.earth::after{background:linear-gradient(#0000,var(--cat))!important}
+footer.sf{margin:0!important;border-radius:0!important;background:var(--ft,var(--cat))!important;border-top:1px solid #ffffff14}
+.g-city{font-size:11px;padding:4px 9px;background:#000b}
+.g-attr{position:absolute;left:8px;bottom:4px;font:10px/1 system-ui,sans-serif;color:#ffffffb0;opacity:0;transition:opacity .3s;pointer-events:none;text-shadow:0 1px 3px #000}
+.g-attr.on{opacity:1}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
 </head><body class="on-hero">
@@ -1265,7 +1273,7 @@ function applyHeroVideo(){
 function applyTheme(){
   const T=HOME.theme||{},r=root.style,set=(k,v)=>{v?r.setProperty(k,v):r.removeProperty(k)};
   set('--p1',T.p1);set('--p1d',T.p1?'color-mix(in srgb,'+T.p1+' 60%,#000)':'');
-  set('--gold',T.ac);set('--acc',T.ac);set('--cat',T.cat);set('--ft',(T.ft&&String(T.ft).toLowerCase()!=='#0b3a35')?T.ft:'#151d52');
+  set('--gold',T.ac);set('--acc',T.ac);set('--cat',T.cat);set('--ft',(T.ft&&!['#0b3a35','#151d52','#0b1a33'].includes(String(T.ft).toLowerCase()))?T.ft:'');
   let mode=T.mode||'dark';if(mode==='auto')mode=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
   root.classList.toggle('lightmode',mode==='light');
   if(mode==='light'){set('--bg','#f4f7fb');set('--fg','#0f1b2e');set('--mut','#5b6b7e');set('--card','#ffffff');set('--line','#d5deea')}
@@ -1476,24 +1484,74 @@ async function startGlobe(){
   // conversion longitude/latitude -> point sur la sphère (même convention que la texture)
   const toV=(lo,la,r)=>{const phi=(90-la)*Math.PI/180,th=(lo+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(th),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(th))};
   const mv=toV(28.5,47.0,2);
-  const pin=new THREE.Mesh(new THREE.SphereGeometry(.03,16,16),new THREE.MeshBasicMaterial({color:0xffd86b}));
+  const C=hex=>new THREE.Color(hex).convertSRGBToLinear();   // couleurs exactes à l'écran (pas délavées)
+  const pin=new THREE.Mesh(new THREE.SphereGeometry(.03,16,16),new THREE.MeshBasicMaterial({color:C(0xffd86b),transparent:true}));
   pin.position.copy(mv).multiplyScalar(1.012);earth.add(pin);
   const rings=[0,1].map(()=>{
-    const m=new THREE.Mesh(new THREE.RingGeometry(.05,.065,48),new THREE.MeshBasicMaterial({color:0xffd86b,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+    const m=new THREE.Mesh(new THREE.RingGeometry(.05,.065,48),new THREE.MeshBasicMaterial({color:C(0xffd86b),transparent:true,side:THREE.DoubleSide,depthWrite:false}));
     m.position.copy(mv).multiplyScalar(1.013);m.lookAt(mv.clone().multiplyScalar(3));earth.add(m);return m});
-  // frontière de la Moldavie : trait lumineux + surface dorée
-  let fill=null;
+  // frontière de la Moldavie : ruban d'épaisseur constante à l'écran (net à tous les zooms) + surface dorée
+  let fill=null,ribbons=null;
   try{
-    const pts=MD_BORDER.slice(0,-1);
-    const curve=new THREE.CatmullRomCurve3(pts.map(p=>toV(p[0],p[1],2.012)),true,'centripetal');
-    earth.add(new THREE.Mesh(new THREE.TubeGeometry(curve,800,.0065,5,true),new THREE.MeshBasicMaterial({color:0xffd86b})));
-    earth.add(new THREE.Mesh(new THREE.TubeGeometry(curve,400,.022,5,true),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.2,blending:THREE.AdditiveBlending,depthWrite:false})));
+    const pts=MD_BORDER.slice(0,-1),bp=pts.map(p=>toV(p[0],p[1],2.009)),n=bp.length;
+    const mkRibbon=(color,opacity,additive)=>{
+      const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*6),3));
+      const idx=[];for(let i=0;i<n;i++){const a=2*i,b=a+1,c=2*((i+1)%n),d=c+1;idx.push(a,b,c,b,d,c)}geo.setIndex(idx);
+      const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:C(color),transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:false,blending:additive?THREE.AdditiveBlending:THREE.NormalBlending,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
+      m.renderOrder=3;earth.add(m);return m};
+    const setRibbon=(m,hw)=>{
+      const a=m.geometry.attributes.position.array;
+      for(let i=0;i<n;i++){
+        const P=bp[i],T=bp[(i+1)%n].clone().sub(bp[(i-1+n)%n]).normalize(),N=P.clone().normalize().cross(T).normalize().multiplyScalar(hw);
+        a[6*i]=P.x+N.x;a[6*i+1]=P.y+N.y;a[6*i+2]=P.z+N.z;a[6*i+3]=P.x-N.x;a[6*i+4]=P.y-N.y;a[6*i+5]=P.z-N.z}
+      m.geometry.attributes.position.needsUpdate=true;m.geometry.computeBoundingSphere()};
+    ribbons={core:mkRibbon(0xffd86b,1,false),glow:mkRibbon(0xffb347,.3,true)};
+    ribbons.set=hw=>{setRibbon(ribbons.core,hw);setRibbon(ribbons.glow,hw*4.5)};
+    ribbons.set(.0115);
     const faces=THREE.ShapeUtils.triangulateShape(pts.map(p=>new THREE.Vector2(p[0],p[1])),[]);
-    const pos=[];pts.forEach(p=>{const v=toV(p[0],p[1],2.008);pos.push(v.x,v.y,v.z)});
+    const pos=[];bp.forEach(v=>{const w=v.clone().normalize().multiplyScalar(2.006);pos.push(w.x,w.y,w.z)});
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(faces.flat());
-    fill=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0xffc861,transparent:true,opacity:.24,side:THREE.DoubleSide,depthWrite:false}));
-    earth.add(fill);
+    fill=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:C(0xffc861),transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}));
+    fill.renderOrder=2;earth.add(fill);
   }catch(e){console.warn('[fx] frontière',e)}
+  // grandes villes (visibles quand on zoome)
+  const CITIES=[{n:{ru:'Кишинёв'},d:'Chișinău',lo:28.8638,la:47.0105},{n:{ru:'Бельцы'},d:'Bălți',lo:27.9184,la:47.754},{n:{ru:'Тирасполь'},d:'Tiraspol',lo:29.6433,la:46.8403},{n:{ru:'Кагул'},d:'Cahul',lo:28.1889,la:45.9075},{n:{ru:'Комрат'},d:'Comrat',lo:28.6567,la:46.2975}];
+  const cityEls=CITIES.map(c=>{
+    const el=document.createElement('span');el.className='g-tag g-city';box.append(el);
+    const dot=new THREE.Mesh(new THREE.SphereGeometry(.02,12,12),new THREE.MeshBasicMaterial({color:C(0xffffff),transparent:true,opacity:0}));
+    dot.position.copy(toV(c.lo,c.la,2.014));earth.add(dot);return{c,el,dot}});
+  const attr=document.createElement('span');attr.className='g-attr';attr.textContent='Imagerie © Esri, Maxar, Earthstar Geographics';box.append(attr);
+  // photo satellite haute résolution autour de la Moldavie (chargée au premier zoom)
+  let detail=null,detailTried=false,lastZ=-1;
+  const loadDetail=async()=>{
+    if(detailTried)return;detailTried=true;
+    try{
+      const Z=9,N=Math.pow(2,Z)*256,LO0=26.2,LO1=30.6,LA0=44.9,LA1=48.9;
+      const px=lo=>(lo+180)/360*N,py=la=>{const r=la*Math.PI/180;return(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*N};
+      const inv=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/N)))*180/Math.PI;
+      const tx0=Math.floor(px(LO0)/256),tx1=Math.floor(px(LO1)/256),ty0=Math.floor(py(LA1)/256),ty1=Math.floor(py(LA0)/256);
+      const W=(tx1-tx0+1)*256,H=(ty1-ty0+1)*256,cv2=document.createElement('canvas');cv2.width=W;cv2.height=H;
+      const g2=cv2.getContext('2d');let ok=0,total=0;const jobs=[];
+      for(let y=ty0;y<=ty1;y++)for(let x=tx0;x<=tx1;x++){total++;jobs.push(new Promise(res=>{
+        const im=new Image();im.crossOrigin='anonymous';
+        im.onload=()=>{g2.drawImage(im,(x-tx0)*256,(y-ty0)*256);ok++;res()};im.onerror=()=>res();
+        im.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+Z+'/'+y+'/'+x}))}
+      await Promise.all(jobs);
+      if(ok<total*.7)return;
+      const t=new THREE.CanvasTexture(cv2);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;t.generateMipmaps=false;t.minFilter=THREE.LinearFilter;
+      const ac=document.createElement('canvas');ac.width=ac.height=128;const ag=ac.getContext('2d'),id=ag.createImageData(128,128);
+      for(let j=0;j<128;j++)for(let i=0;i<128;i++){const u=i/127,v=j/127,m=Math.min(u,1-u,v,1-v),a=Math.round(255*ease(clamp(m/.07))),o=(j*128+i)*4;id.data[o]=id.data[o+1]=id.data[o+2]=a;id.data[o+3]=255}
+      ag.putImageData(id,0,0);
+      const NX=40,NY=60,x0=tx0*256,x1=(tx1+1)*256,y0=ty0*256,y1=(ty1+1)*256,pos=[],uv=[],ind=[];
+      for(let j=0;j<=NY;j++)for(let i=0;i<=NX;i++){
+        const xx=x0+(x1-x0)*i/NX,yy=y0+(y1-y0)*j/NY,v=toV(xx/N*360-180,inv(yy),2.0035);
+        pos.push(v.x,v.y,v.z);uv.push(i/NX,1-j/NY)}
+      for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const a=j*(NX+1)+i,b=a+1,c=a+NX+1,d=c+1;ind.push(a,c,b,b,c,d)}
+      const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(ind);
+      detail=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:t,alphaMap:new THREE.CanvasTexture(ac),color:C(0xdcdcdc),transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));
+      detail.renderOrder=1;earth.add(detail);
+    }catch(e){console.warn('[fx] imagerie',e)}
+  };
   // orientation : globe toujours DROIT (axe nord-sud vertical), la Moldavie se place face caméra
   const ease=x=>x*x*(3-2*x);
   const focusY=-Math.atan2(mv.x,mv.z),TILT0=.4;
@@ -1501,7 +1559,7 @@ async function startGlobe(){
   const apply=()=>{
     globe.rotation.y=rotY;
     globe.rotation.x=lerp(TILT0,.8,ease(zoom))+tiltUser;
-    cam.position.z=lerp(9.4,2.9,ease(zoom));
+    cam.position.z=lerp(9.4,2.38,ease(zoom));
   };
   apply();
   // glisser pour tourner, pincer / boutons / double-clic pour zoomer
@@ -1517,7 +1575,7 @@ async function startGlobe(){
       if(pinch)zoomT=clamp(zoomT+(d-pinch)*.004);pinch=d;return;
     }
     const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
-    rotY+=dx*lerp(.006,.0035,ease(zoom));tiltUser=clamp(tiltUser+dy*.004,-.5,.5);dragging=true;
+    rotY+=dx*lerp(.006,.00045,ease(zoom));tiltUser=clamp(tiltUser+dy*lerp(.004,.0006,ease(zoom)),-.5,.5);dragging=true;
   });
   const up=e=>{ptrs.delete(e.pointerId);pinch=0;if(!ptrs.size){dragging=false;idleAt=performance.now()+2500}};
   canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
@@ -1533,17 +1591,22 @@ async function startGlobe(){
   if('ResizeObserver' in window)new ResizeObserver(resize).observe(box);else addEventListener('resize',resize);
   // boucle : uniquement quand le globe est visible
   let visible=false,raf=0,t0=0;
-  const wp=new THREE.Vector3();
+  const wp=new THREE.Vector3(),cw=new THREE.Vector3();
   const frame=t=>{
     if(!visible)return;raf=requestAnimationFrame(frame);
     if(!t0)t0=t;
     const k=RM?1:clamp((t-t0)/1300),e=1-Math.pow(1-k,3);
     globe.scale.setScalar(.78+.22*e);
     clouds.rotation.y+=RM?0:.0005;
-    rings.forEach((r,i)=>{const s=((t/1500)+i*.5)%1;r.scale.setScalar(1+s*3.2);r.material.opacity=(1-s)*.85});
-    if(fill&&!RM)fill.material.opacity=.2+.09*Math.sin(t/650);
-    if(!dragging&&performance.now()>idleAt){
-      const target=focusY+(RM?0:Math.sin(t/2600)*.08);
+    const ks=Math.max((cam.position.z-2)/7.4,.06),zf=ease(clamp((zoom-.45)/.3));
+    pin.scale.setScalar(ks);pin.material.opacity=1-zf;
+    rings.forEach((r,i)=>{const q=((t/1500)+i*.5)%1;r.scale.setScalar(ks*(1+q*3.2));r.material.opacity=(1-q)*.85*(1-zf)});
+    if(fill)fill.material.opacity=(RM?.2:.2+.05*Math.sin(t/650))*(1-.55*zf);
+    if(ribbons&&Math.abs(cam.position.z-lastZ)>.004){lastZ=cam.position.z;ribbons.set(Math.max((cam.position.z-2)*.0019,.00055))}
+    if(zoomT>.12)loadDetail();
+    if(detail){const o=ease(clamp((zoom-.2)/.35));detail.material.opacity=o;attr.classList.toggle('on',o>.15)}
+    if(!dragging&&performance.now()>idleAt&&zoom<.3){
+      const target=focusY+(RM?0:Math.sin(t/2600)*.08*(1-zoom));
       let d=target-rotY;d=Math.atan2(Math.sin(d),Math.cos(d));
       rotY+=d*.035;tiltUser*=.94;
     }
@@ -1554,7 +1617,14 @@ async function startGlobe(){
     const facing=wp.z>.35;
     wp.project(cam);
     tag.style.transform=`translate(${((wp.x*.5+.5)*box.clientWidth+18).toFixed(1)}px,${((-wp.y*.5+.5)*box.clientHeight-14).toFixed(1)}px)`;
-    tag.classList.toggle('on',facing&&k>.6);
+    tag.classList.toggle('on',facing&&k>.6&&zf<.5);
+    const L2=md().lang();
+    cityEls.forEach(ce=>{
+      ce.dot.scale.setScalar(ks);ce.dot.material.opacity=zf;
+      ce.dot.getWorldPosition(cw);const fc=cw.z>.3;cw.project(cam);
+      const nm=ce.c.n[L2]||ce.c.d;if(ce.el.textContent!==nm)ce.el.textContent=nm;
+      ce.el.style.transform='translate('+((cw.x*.5+.5)*box.clientWidth+10).toFixed(1)+'px,'+((-cw.y*.5+.5)*box.clientHeight-10).toFixed(1)+'px)';
+      ce.el.classList.toggle('on',fc&&zf>.35)});
   };
   new IntersectionObserver(es=>es.forEach(en=>{
     visible=en.isIntersecting;
