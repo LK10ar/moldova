@@ -692,9 +692,9 @@ document.addEventListener('click', e => {
 });
 
 /* --- apparence : couleurs, polices, mode --- */
-const TH0 = { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#151d52', mode: 'dark', ff: 'Playfair Display', fb: 'Georgia' };
+const TH0 = { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#0b1a33', mode: 'dark', ff: 'Playfair Display', fb: 'Georgia' };
 const PRESETS = [
-  { n: 'Nuit & or', t: { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#151d52' } },
+  { n: 'Nuit & or', t: { p1: '#2f6df6', ac: '#ffc83d', bg: '#070f1d', cat: '#0b1a33', ft: '#0b1a33' } },
   { n: 'Vignoble', t: { p1: '#3aa86a', ac: '#f0c36d', bg: '#08140e', cat: '#0d2118', ft: '#0f2a1d' } },
   { n: 'Azur & sable', t: { p1: '#1fa3d6', ac: '#f2d49b', bg: '#06141c', cat: '#0a2230', ft: '#0a2c38' } },
   { n: 'Violet nuit', t: { p1: '#8b5cf6', ac: '#fbbf24', bg: '#0d0a1c', cat: '#150f2e', ft: '#1d1245' } },
@@ -831,15 +831,20 @@ async function saveHome() {
 
 /* ---------------------------------------------------------------- propositions automatiques */
 async function showCands() {
-  $('topbar').innerHTML = `<h2>✨ Propositions automatiques<small>Fiches suggérées par Wikipédia et Google : valide celles que tu veux garder (elles arrivent en brouillon).</small></h2><button class="btn" id="cRef">↻ Actualiser</button>`;
+  $('topbar').innerHTML = `<h2>✨ Propositions automatiques<small>Fiches suggérées par Wikipédia et Google : valide celles que tu veux garder (elles arrivent en brouillon).</small></h2><button class="btn gold" id="cFind">🔎 Chercher de nouvelles propositions</button><button class="btn" id="cRef">↻ Actualiser</button>`;
   $('content').innerHTML = `<div class="list" id="cl"><div class="skeleton"></div><div class="skeleton"></div></div>`;
   $('cRef').onclick = showCands;
+  $('cFind').onclick = async () => {
+    const b = $('cFind'); b.disabled = true; b.textContent = '⏳ Recherche en cours (jusqu\'à 40 s)…';
+    try { const d = await call('candidates/refresh', { method: 'POST' }); toast(d.added ? d.added + ' nouvelle(s) proposition(s) trouvée(s)' : 'Aucune nouvelle proposition pour le moment'); showCands(); }
+    catch (e) { toast(e.message.includes('404') ? 'Le serveur n\'est pas à jour : remets le nouveau server.js dans ton dépôt (Render redéploie seul).' : e.message, 'err'); b.disabled = false; b.textContent = '🔎 Chercher de nouvelles propositions'; }
+  };
   try { S.cands = await call('candidates'); } catch (e) { $('cl').innerHTML = `<div class="empty"><b>Impossible de charger</b>${esc(e.message)}</div>`; return; }
   S.candCount = S.cands.length; const bd = $('candBadge'); if (bd) { bd.textContent = S.candCount; bd.classList.toggle('alert', !!S.candCount); }
   drawCands();
 }
 function drawCands() {
-  if (!S.cands.length) { $('cl').innerHTML = '<div class="empty"><b>Rien à valider</b>Les nouvelles propositions apparaîtront ici.</div>'; return; }
+  if (!S.cands.length) { $('cl').innerHTML = '<div class="empty"><b>Rien à valider</b>Clique sur « Chercher de nouvelles propositions » : le site explore Wikipédia (monastères, caves, parcs, musées, forteresses…) et ne garde que les lieux situés en Moldavie.</div>'; return; }
   $('cl').innerHTML = S.cands.map(c => `<div class="cand" data-id="${esc(c._id)}"><div class="thumb" ${bg(c.photoUrl)}>${c.photoUrl ? '' : '✨'}</div>
     <div class="info" style="flex:1;min-width:0"><div class="t" style="font-weight:700">${esc(c.name)} <span class="pill dra" style="margin-left:6px">${esc(c.source)}</span></div><p>${esc(c.summary || 'Pas de description.')}</p></div>
     <div class="acts"><button class="btn sm pri" data-c="ok">Valider</button><button class="btn sm bad" data-c="no">Rejeter</button></div></div>`).join('');
