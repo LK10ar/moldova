@@ -215,6 +215,14 @@ button.tkr{cursor:pointer}button.tkr:hover{border-color:var(--gold);background:#
 .tk-empty{padding:18px;text-align:center;color:var(--mut);border:1px dashed var(--line2);border-radius:12px}
 details.card-sec summary{cursor:pointer;font:600 16px var(--ff)}
 @media(max-width:900px){.tks .tkf{grid-template-columns:1fr}}
+
+.rng{display:grid;grid-template-columns:150px 1fr 64px;gap:10px;align-items:center;margin:0 0 12px;font-size:14px}
+.rng span{color:var(--mut)}.rng input[type=range]{accent-color:var(--gold);padding:0;background:none;border:0}.rng output{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.bgprev{position:relative;height:150px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#0b1a33;display:grid;place-items:center}
+.bgprev .bgp-img{position:absolute;inset:-6%;background-size:cover;background-position:center}
+.bgprev b{position:relative;font:600 16px var(--ff);text-shadow:0 2px 12px #000}
+.bgprev.auto::after{content:"Photo automatique du pays (aperçu non disponible ici)";position:absolute;left:10px;right:10px;bottom:8px;font-size:12px;color:var(--mut);text-align:center}
+@media(max-width:900px){.rng{grid-template-columns:1fr 64px}.rng span{grid-column:1/-1}}
 </style></head><body>
 <div id="toasts" aria-live="polite"></div>
 
