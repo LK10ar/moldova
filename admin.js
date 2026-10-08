@@ -63,7 +63,7 @@ const DEF_CARDS = {
 
 /* ---------------------------------------------------------------- état */
 const S = { view: '', list: [], filter: 'all', q: '', home: null, homeErr: '', dirty: false, homeTab: 'look', cands: [], candCount: 0 };
-const normHome = d => ({ gallery: d.gallery || [], cards: d.cards || {}, cardOrder: d.cardOrder || [], sections: d.sections || [], theme: d.theme || {}, texts: d.texts || {}, heroImage: d.heroImage || '', heroVideo: d.heroVideo || '' });
+const normHome = d => ({ gallery: d.gallery || [], cards: d.cards || {}, cardOrder: d.cardOrder || [], sections: d.sections || [], theme: d.theme || {}, texts: d.texts || {}, heroImage: d.heroImage || '', heroVideo: d.heroVideo || '', bg: d.bg || {} });
 const bg = u => u ? `style="background-image:url(&quot;${esc(u)}&quot;)"` : '';
 const isUrl = v => /^https?:\/\//i.test(String(v || '').trim());
 
@@ -721,9 +721,43 @@ function drawLook(box) {
     <label class="f"><span>Textes</span><select data-thsel="fb">${FB.map(n => `<option ${thv('fb') === n ? 'selected' : ''}>${n}</option>`).join('')}</select><em>« Georgia » = la police d'origine du site.</em></label>
     <label class="f"><span>Mode</span><select data-thsel="mode"><option value="dark" ${thv('mode') === 'dark' ? 'selected' : ''}>Sombre (recommandé)</option><option value="light" ${thv('mode') === 'light' ? 'selected' : ''}>Clair</option><option value="auto" ${thv('mode') === 'auto' ? 'selected' : ''}>Automatique (suit l'appareil du visiteur)</option></select></label>
     <button type="button" class="btn" data-threset>↺ Revenir aux réglages d'origine</button></div>
+   <div class="card-sec"><h5>Image de fond (derrière tout le site)</h5>
+    <p class="hint">Une photo en transparence derrière les zones bleues (le header vidéo et la planète gardent leur propre fond). Sans adresse, le site met une photo automatique du pays.</p>
+    <div class="checks" style="margin-bottom:12px"><label><input type="checkbox" data-bg="on" ${BG().on !== false ? 'checked' : ''}> Afficher l'image de fond</label><label><input type="checkbox" data-bg="parallax" ${BG().parallax !== false ? 'checked' : ''}> Effet de profondeur au défilement</label></div>
+    <label class="f"><span>Adresse de l'image (https)</span><input data-bg="url" type="url" placeholder="Vide = photo automatique" value="${esc(BG().url || '')}"></label>
+    <div class="rng"><span>Transparence (visibilité)</span><input type="range" data-bg="opacity" min="0" max="100" step="1" value="${BG().opacity != null ? BG().opacity : 24}"><output>${BG().opacity != null ? BG().opacity : 24} %</output></div>
+    <div class="rng"><span>Flou</span><input type="range" data-bg="blur" min="0" max="20" step="1" value="${BG().blur || 0}"><output>${BG().blur || 0} px</output></div>
+    <div class="rng"><span>Luminosité</span><input type="range" data-bg="brightness" min="40" max="140" step="5" value="${BG().brightness != null ? BG().brightness : 100}"><output>${BG().brightness != null ? BG().brightness : 100} %</output></div>
+    <label class="f"><span>Cadrage de la photo</span><select data-bg="pos"><option value="center" ${(BG().pos || 'center') === 'center' ? 'selected' : ''}>Centre</option><option value="top" ${BG().pos === 'top' ? 'selected' : ''}>Haut</option><option value="bottom" ${BG().pos === 'bottom' ? 'selected' : ''}>Bas</option></select></label>
+    <div class="bgprev" id="bgPrev"><div class="bgp-img"></div><b>Aperçu</b></div>
+    <div class="tools" style="margin-top:12px"><button type="button" class="btn" data-bgreset>↺ Réglages d'origine</button></div>
+   </div>
   </div><div class="lookprev"><div class="card-sec" style="position:sticky;top:90px"><h5>Aperçu en direct</h5><div id="lpv"></div><p class="hint" style="margin:12px 0 0">Les titres, les boutons et le pied de page prennent ces couleurs sur tout le site après enregistrement.</p></div></div></div>`;
-  drawPreview();
+  drawPreview(); drawBgPrev();
 }
+const BG = () => (S.home && S.home.bg) || {};
+function drawBgPrev() {
+  const el = $('bgPrev'); if (!el) return; const B = BG(), im = el.querySelector('.bgp-img'); if (!im) return;
+  const on = B.on !== false;
+  im.style.backgroundImage = isUrl(B.url) ? `url("${B.url}")` : '';
+  im.style.opacity = on ? ((B.opacity != null ? B.opacity : 24) / 100) : 0;
+  im.style.filter = `blur(${B.blur || 0}px) brightness(${(B.brightness != null ? B.brightness : 100) / 100})`;
+  im.style.backgroundPosition = B.pos === 'top' ? 'center top' : B.pos === 'bottom' ? 'center bottom' : 'center';
+  el.classList.toggle('auto', !isUrl(B.url));
+}
+function bgInput(e) {
+  if (S.view !== 'home' || S.homeTab !== 'look') return;
+  const t = e.target, k = t.dataset && t.dataset.bg; if (!k) return;
+  const B = S.home.bg = S.home.bg || {};
+  if (t.type === 'checkbox') B[k] = t.checked;
+  else if (t.type === 'range') { B[k] = +t.value; const o = t.parentNode.querySelector('output'); if (o) o.textContent = t.value + (k === 'blur' ? ' px' : ' %'); }
+  else if (t.value.trim()) B[k] = t.value.trim(); else delete B[k];
+  homeDirty(); drawBgPrev();
+}
+document.addEventListener('input', bgInput); document.addEventListener('change', bgInput);
+document.addEventListener('click', e => {
+  if (S.view === 'home' && e.target.closest('[data-bgreset]') && confirm("Revenir à l'image de fond d'origine (photo automatique, transparence 24 %) ?")) { S.home.bg = {}; homeDirty(); drawLook($('homeBody')); }
+});
 function drawPreview() {
   const p = $('lpv'); if (!p) return;
   const p1 = thv('p1'), ac = thv('ac'), bg = thv('bg'), cat = thv('cat'), ft = thv('ft'), light = thv('mode') === 'light';
