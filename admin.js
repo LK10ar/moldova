@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const API = 'https://back-moldova-xjyz.onrender.com'; // URL de l'API Render, sans / final
+const API = 'https://back-moldova.onrender.com'; // URL de l'API Render, sans / final
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slugify = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -14,7 +14,7 @@ async function call(path, opt = {}) {
   const r = await fetch(API + '/api/admin/' + path, { ...opt, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } });
   if (r.status === 401) { logout(); throw new Error('Session expirée, reconnecte-toi.'); }
   let data = null; try { data = await r.json(); } catch {}
-  if (!r.ok) throw new Error((data && data.error) || ('Erreur ' + r.status));
+  if (!r.ok) { const er = new Error((data && data.error) || ('Erreur ' + r.status)); er.quota = !!(data && data.quota); er.status = r.status; throw er; }
   return data;
 }
 function toast(msg, type = 'ok') {
@@ -50,7 +50,7 @@ const COLS = {
 };
 const BASE_KEYS = ['_id', '__v', 'createdAt', 'updatedAt', 'slug', 'status', 'cover', 'title', 'gallery', 'location', 'summary', 'videos', 'links', 'sub', 'w', 'trace'];
 const MENU = [
-  { h: "Page d'accueil" }, { id: 'home', icon: '🏠', label: 'Accueil du site' },
+  { h: "Page d'accueil" }, { id: 'home', icon: '🏠', label: 'Accueil du site' }, { id: 'langs', icon: '🌍', label: 'Langues' },
   { h: 'Contenu' }, ...Object.entries(COLS).map(([id, c]) => ({ id, icon: c.icon, label: c.label })),
   { h: 'À valider' }, { id: 'candidates', icon: '✨', label: 'Propositions auto' }
 ];
@@ -63,7 +63,7 @@ const DEF_CARDS = {
 
 /* ---------------------------------------------------------------- état */
 const S = { view: '', list: [], filter: 'all', q: '', home: null, homeErr: '', dirty: false, homeTab: 'look', cands: [], candCount: 0 };
-const normHome = d => ({ gallery: d.gallery || [], cards: d.cards || {}, cardOrder: d.cardOrder || [], sections: d.sections || [], theme: d.theme || {}, texts: d.texts || {}, heroImage: d.heroImage || '', heroVideo: d.heroVideo || '', bg: d.bg || {} });
+const normHome = d => ({ gallery: d.gallery || [], cards: d.cards || {}, cardOrder: d.cardOrder || [], sections: d.sections || [], theme: d.theme || {}, texts: d.texts || {}, heroImage: d.heroImage || '', heroVideo: d.heroVideo || '', bg: d.bg || {}, video: d.video || {}, filters: d.filters || {} });
 const bg = u => u ? `style="background-image:url(&quot;${esc(u)}&quot;)"` : '';
 const isUrl = v => /^https?:\/\//i.test(String(v || '').trim());
 
@@ -71,7 +71,7 @@ const isUrl = v => /^https?:\/\//i.test(String(v || '').trim());
 function logout() { token = ''; sessionStorage.removeItem('md_t'); closeDrawer(true); show(); }
 function show() {
   $('login').classList.toggle('hide', !!token); $('app').classList.toggle('hide', !token);
-  if (token) { buildMenu(); go(S.view || 'home'); loadCandCount(); }
+  if (token) (async () => { try { await loadLangs(); } catch {} buildMenu(); go(S.view || 'home'); loadCandCount(); })();
 }
 async function login() {
   $('err').textContent = ''; const b = $('go'); b.disabled = true;
@@ -105,6 +105,7 @@ function go(id) {
   document.querySelectorAll('.mi').forEach(b => b.classList.toggle('on', b.dataset.go === id));
   window.scrollTo(0, 0);
   if (id === 'home') return showHome();
+  if (id === 'langs') return showLangs();
   if (id === 'candidates') return showCands();
   return showCol(id);
 }
@@ -142,7 +143,7 @@ function drawList() {
      <div class="info"><div class="t">${esc((x.title && x.title.fr) || x.slug)}</div><div class="s">${esc(sub)}</div></div>
      ${ev ? '<span class="pill ev">Événement</span>' : ''}
      <button class="pill ${pub ? 'pub' : 'dra'}" data-a="toggle" title="Cliquer pour ${pub ? 'dépublier' : 'publier'}">${pub ? 'Publié' : 'Brouillon'}</button>
-     <div class="acts"><button class="btn sm" data-a="edit">Modifier</button><button class="btn sm bad ico" data-a="del" aria-label="Supprimer">🗑</button></div></div>`;
+     <div class="acts"><button class="btn sm" data-a="edit">Modifier</button><button class="btn sm ico" data-a="move" title="Déplacer vers une autre rubrique ou un autre filtre">⇄</button><button class="btn sm bad ico" data-a="del" aria-label="Supprimer">🗑</button></div></div>`;
   }).join('');
 }
 $('content').addEventListener('click', async e => {
@@ -151,6 +152,7 @@ $('content').addEventListener('click', async e => {
   if (!row || !a || !COLS[S.view]) return;
   const x = S.list.find(i => i._id === row.dataset.id); if (!x) return;
   if (a.dataset.a === 'edit') return openEditor(S.view, x);
+  if (a.dataset.a === 'move') return moveModal(x);
   if (a.dataset.a === 'toggle') {
     const next = x.status === 'published' ? 'draft' : 'published';
     try { const u = await call(S.view + '/' + x._id, { method: 'PUT', body: JSON.stringify({ status: next }) }); Object.assign(x, u); drawList(); toast(next === 'published' ? 'Fiche publiée' : 'Fiche passée en brouillon'); }
@@ -191,7 +193,8 @@ function openEditor(colId, doc) {
   <div class="tabs" id="dTabs">${[['gen', 'Général'], ['txt', 'Textes'], ['det', 'Détails'], ['med', 'Médias'], ['map', 'Carte'], ['trk', 'Parcours'], ['adv', 'Avancé']].map(([k, l], i) => `<button type="button" data-t="${k}" class="${i ? '' : 'on'}">${l}</button>`).join('')}</div>
   <div class="db">
    <div class="pane on" data-p="gen">
-    <div class="g2"><label class="f"><span>Statut</span><select data-f="status"><option value="draft" ${d.status !== 'published' ? 'selected' : ''}>Brouillon (invisible)</option><option value="published" ${d.status === 'published' ? 'selected' : ''}>Publié (visible)</option></select></label>
+    <div class="g2"><label class="f"><span>Rubrique (où la fiche s'affiche sur le site)</span><select data-f="rubric">${RUBS.map(([k, l]) => `<option value="${k}" ${k === (isNew ? ({ circuits: 'c', activities: 'a', restaurants: 'g', heritage: 'h', news: 'n' })[colId] : rubOf(colId, d)) ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label class="f"><span>Statut</span><select data-f="status"><option value="draft" ${d.status !== 'published' ? 'selected' : ''}>Brouillon (invisible)</option><option value="published" ${d.status === 'published' ? 'selected' : ''}>Publié (visible)</option></select></label>
     <label class="f"><span>Identifiant (slug)</span><input data-f="slug" placeholder="ex : cricova" value="${esc(d.slug || '')}"><em>Sans espace ni accent, unique. Généré depuis le titre si tu le laisses vide.</em></label></div>
     <div class="card-sec"><h5>Titre</h5><div class="g2">${LG.map(l => `<label class="f"><span>${l.toUpperCase()}${l === 'fr' ? ' *' : ''}</span><input data-f="title.${l}" value="${esc(t[l] || '')}"></label>`).join('')}</div></div>
     <label class="f"><span>Photo principale (URL)</span><input data-f="cover" type="url" placeholder="https://…" value="${esc(d.cover || '')}"><em>Laisse vide pour que le site cherche une photo tout seul.</em></label>
@@ -205,7 +208,7 @@ function openEditor(colId, doc) {
     <p class="hint">Champs propres à cette rubrique.</p>
     <div class="g2">${C.fields.filter(f => f.t !== 'multi' && f.t !== 'i18n').map(f => fld(f, d[f.k])).join('')}</div>
     ${C.fields.filter(f => f.t === 'multi' || f.t === 'i18n').map(f => fld(f, d[f.k])).join('')}
-    <div class="g2"><label class="f"><span>Sous-catégorie (sub)</span><input data-f="sub" value="${esc(d.sub || '')}"><em>Optionnel : écrase la sous-catégorie calculée.</em></label>
+    <div class="g2"><label class="f"><span>Filtre / catégorie</span><input data-f="sub" list="subList" value="${esc(d.sub || '')}"><datalist id="subList">${subOptions('a')}${subOptions('g')}${subOptions('h')}${subOptions('t')}</datalist><em>Le bouton de filtre sous lequel la fiche apparaît. Crée de nouveaux filtres dans Accueil du site › Filtres.</em></label>
     <label class="f"><span>Terme Wikipédia (w)</span><input data-f="w" value="${esc(d.w || '')}"><em>Sert à retrouver la photo et l'histoire sur Wikipédia.</em></label></div>
    </div>
    <div class="pane" data-p="med">
@@ -253,6 +256,7 @@ function openEditor(colId, doc) {
   $('dSave').onclick = saveEditor;
   $('clrPt').onclick = () => setPoint(null, null);
   setTimeout(() => { const f = dr.querySelector('[data-f="title.fr"]'); if (f && isNew) f.focus(); }, 280);
+  ensureHome().then(() => { const l = $('subList'); if (l) l.innerHTML = subOptions('a') + subOptions('g') + subOptions('h') + subOptions('t'); });
 }
 const F = k => $('drawer') && $('drawer').querySelector(`[data-f="${k}"]`);
 function markDirty() { if (!ED) return; ED.dirty = true; $('dot').classList.remove('hide'); }
@@ -514,9 +518,11 @@ async function saveEditor() {
   btn.disabled = true; btn.textContent = 'Enregistrement…';
   try {
     const col = ED.col;
-    if (ED.doc) await call(col + '/' + ED.doc._id, { method: 'PUT', body: JSON.stringify(body) });
-    else await call(col, { method: 'POST', body: JSON.stringify(body) });
-    toast(ED.doc ? 'Fiche enregistrée' : 'Fiche créée'); closeDrawer(true);
+    const rub = F('rubric') && F('rubric').value, wasNew = !ED.doc;
+    const saved = ED.doc ? await call(col + '/' + ED.doc._id, { method: 'PUT', body: JSON.stringify(body) }) : await call(col, { method: 'POST', body: JSON.stringify(body) });
+    let moved = false;
+    if (rub && saved && rub !== rubOf(col, saved)) { await doMove(col, saved, rub); moved = true; }
+    toast(moved ? 'Fiche enregistrée et déplacée vers « ' + RUBS.find(r => r[0] === rub)[1] + ' »' : wasNew ? 'Fiche créée' : 'Fiche enregistrée'); closeDrawer(true);
     if (S.view === col) showCol(col);
   } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--bad)'; toast(e.message, 'err'); btn.disabled = false; btn.textContent = 'Enregistrer'; }
 }
@@ -542,7 +548,7 @@ async function showHome() {
   drawHome();
 }
 function drawHome() {
-  const H = S.home, tabs = [['look', '🎨 Apparence', Object.keys(H.theme).length], ['sections', '🧩 Sections & ordre', H.sections.length + H.cardOrder.length], ['texts', '✍️ Textes', Object.keys(H.texts).length], ['gallery', '🖼 Galerie « Un pays en images »', H.gallery.length], ['cards', '🃏 Cartes « Par où commencer »', Object.keys(H.cards).length], ['video', '🎬 Header (vidéo & photo)', (H.heroVideo ? 1 : 0) + (H.heroImage ? 1 : 0)]];
+  const H = S.home, tabs = [['look', '🎨 Apparence', Object.keys(H.theme).length], ['sections', '🧩 Sections & ordre', H.sections.length + H.cardOrder.length], ['texts', '✍️ Textes', Object.keys(H.texts).length], ['gallery', '🖼 Galerie « Un pays en images »', H.gallery.length], ['cards', '🃏 Cartes « Par où commencer »', Object.keys(H.cards).length], ['filters', '🏷 Filtres', Object.values(H.filters).reduce((n, l) => n + l.length, 0)], ['yt', '▶ Vidéo YouTube', (H.video && H.video.on === false) ? 0 : 1], ['video', '🎬 Header (vidéo & photo)', (H.heroVideo ? 1 : 0) + (H.heroImage ? 1 : 0)]];
   let h = '';
   if (S.homeErr) h += `<div class="card-sec" style="border-color:#e5615f88"><h5>⚠ Le serveur ne répond pas à cette section</h5><p class="hint" style="margin:0">${esc(S.homeErr)}. Si c'est une erreur 404, le fichier <b>server.js</b> mis à jour n'est pas encore déployé sur Render : mets-le à jour dans ton dépôt, Render le redéploie tout seul.</p></div>`;
   h += `<div class="tools"><div class="seg">${tabs.map(([k, l, n]) => `<button data-ht="${k}" class="${S.homeTab === k ? 'on' : ''}">${l}${n ? ` (${n})` : ''}</button>`).join('')}</div></div><div id="homeBody"></div>`;
@@ -553,6 +559,95 @@ function drawHome() {
   $('hCancel').onclick = () => { if (confirm('Abandonner les modifications non enregistrées ?')) { S.dirty = false; S.home = null; showHome(); } };
 }
 function homeDirty() { S.dirty = true; const b = $('saveBar'); if (b) b.classList.remove('hide'); }
+/* ---- rubriques, déplacement de fiches, filtres ---- */
+const RUBS = [['c', 'Circuits', 'circuits'], ['a', 'Activités', 'activities'], ['g', 'Vin & gastronomie', 'restaurants'], ['h', 'Histoire & culture', 'heritage'], ['t', 'Transnistrie', null], ['e', 'Événements', 'news'], ['n', 'Actualités', 'news']];
+const rubOf = (col, d) => col === 'circuits' ? 'c' : col === 'news' ? ((d.tags || []).includes('event') ? 'e' : 'n') : (String(d.wilaya || '').toLowerCase() === 'transnistrie' ? 't' : ({ activities: 'a', restaurants: 'g', heritage: 'h' })[col]);
+function moveSpec(col, doc, to) {
+  if (to === 't') return { col: ['activities', 'restaurants', 'heritage'].includes(col) ? col : 'heritage', patch: { wilaya: 'transnistrie' } };
+  if (to === 'e' || to === 'n') { const tags = (doc.tags || []).filter(t => t !== 'event'); if (to === 'e') tags.push('event'); return { col: 'news', patch: { tags } }; }
+  return { col: ({ c: 'circuits', a: 'activities', g: 'restaurants', h: 'heritage' })[to], patch: { wilaya: '' } };
+}
+async function doMove(col, doc, to, sub) {
+  const sp = moveSpec(col, doc, to);
+  if (sub !== undefined) sp.patch.sub = sub; else if (!doc.sub) { const k = doc.kind || doc.category || doc.type; if (k) sp.patch.sub = k; }
+  return call(col + '/' + doc._id + '/move', { method: 'POST', body: JSON.stringify({ to: sp.col, patch: sp.patch }) });
+}
+async function ensureHome() { if (!S.home) { try { S.home = normHome(await call('settings/home')); } catch { S.home = normHome({}); } } return S.home; }
+const subOptions = rub => ((S.home && S.home.filters && S.home.filters[rub]) || []).map(f => `<option value="${esc(f.k)}">${esc(f.l.fr || f.k)}</option>`).join('');
+function moveModal(x) {
+  const col = S.view, cur = rubOf(col, x);
+  const m = openModal(`<h3>Déplacer « ${esc((x.title && x.title.fr) || x.slug)} »</h3><div class="mb">
+    <p class="hint">La fiche change de rubrique : elle apparaît dans l'onglet choisi sur le site, avec le filtre indiqué.</p>
+    <label class="f"><span>Nouvelle rubrique</span><select id="mvR">${RUBS.map(([k, l]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label class="f"><span>Filtre / catégorie (facultatif)</span><input id="mvS" list="mvL" placeholder="ex : musee, chateau…" value="${esc(x.sub || '')}"><datalist id="mvL">${subOptions('a')}${subOptions('g')}${subOptions('h')}${subOptions('t')}</datalist><em>Laisse vide pour garder le filtre actuel. Un nouveau filtre se crée dans l'onglet « Filtres » de l'accueil.</em></label>
+  </div><div class="mf"><button class="btn" id="mCancel">Annuler</button><button class="btn pri" id="mOk">Déplacer</button></div>`);
+  ensureHome().then(() => { const l = $('mvL'); if (l) l.innerHTML = subOptions('a') + subOptions('g') + subOptions('h') + subOptions('t'); });
+  $('mCancel').onclick = closeModal;
+  $('mOk').onclick = async () => {
+    const to = $('mvR').value, sub = $('mvS').value.trim(); if (to === cur && sub === (x.sub || '')) { closeModal(); return; }
+    const b = $('mOk'); b.disabled = true;
+    try { await doMove(col, x, to, sub || undefined); closeModal(); toast('Fiche déplacée vers « ' + RUBS.find(r => r[0] === to)[1] + ' »'); showCol(col); }
+    catch (e) { toast(e.message, 'err'); b.disabled = false; }
+  };
+}
+const FRUB = [['a', '🥾 Activités'], ['g', '🍷 Vin & gastronomie'], ['h', '🏛️ Histoire & culture'], ['t', '🏰 Transnistrie']];
+function drawFilters(box) {
+  const Fl = S.home.filters = S.home.filters || {};
+  box.innerHTML = `<p class="hint">Ce sont les boutons de filtre affichés au-dessus des fiches. Écris un nom (ex : Château) et clique sur « Ajouter » : le bouton est créé. Pour y ranger une fiche, utilise le bouton « ⇄ Déplacer » de la fiche (ou son champ « Filtre »).</p>` +
+    FRUB.map(([c, t]) => `<div class="card-sec"><h5>${t}</h5>${(Fl[c] || []).map((f, i) => `<div class="frow" data-fc="${c}" data-i="${i}"><b>${esc(f.l.fr || f.k)}</b><code>${esc(f.k)}</code>
+      <span class="grow"></span><button type="button" class="btn sm" data-fa="tr">Traductions</button><button type="button" class="btn sm ico" data-fa="up" ${i ? '' : 'disabled'}>↑</button><button type="button" class="btn sm ico" data-fa="down" ${i < Fl[c].length - 1 ? '' : 'disabled'}>↓</button><button type="button" class="btn sm bad ico" data-fa="del">✕</button></div>
+      <div class="ftr hide g2" data-ftr="${c}.${i}">${LG.map(l => `<label class="f"><span>${l.toUpperCase()}</span><input data-fl="${c}.${i}.${l}" value="${esc(f.l[l] || '')}"></label>`).join('')}</div>`).join('') || '<p class="hint" style="margin:0 0 10px">Aucun filtre ajouté ici pour l\'instant (ceux déjà présents sur le site continuent de s\'afficher).</p>'}
+      <div class="srch"><input data-fnew="${c}" placeholder="Nouveau filtre (ex : Château)"><button type="button" class="btn gold" data-fa="add" data-fc="${c}">＋ Ajouter</button></div></div>`).join('');
+}
+document.addEventListener('click', e => {
+  if (S.view !== 'home' || S.homeTab !== 'filters') return;
+  const b = e.target.closest('[data-fa]'); if (!b) return;
+  const Fl = S.home.filters, a = b.dataset.fa;
+  if (a === 'add') {
+    const c = b.dataset.fc, inp = document.querySelector(`[data-fnew="${c}"]`), label = inp.value.trim(); if (!label) return;
+    const list = Fl[c] = Fl[c] || []; let k = slugify(label) || 'filtre', n = 2; const base = k; while (list.some(f => f.k === k)) k = base + '-' + n++;
+    list.push({ k, l: { fr: label } }); homeDirty(); drawFilters($('homeBody')); toast('Filtre « ' + label + ' » créé'); return;
+  }
+  const row = b.closest('.frow'); if (!row) return; const c = row.dataset.fc, i = +row.dataset.i, list = Fl[c];
+  if (a === 'tr') { const t = document.querySelector(`[data-ftr="${c}.${i}"]`); if (t) t.classList.toggle('hide'); return; }
+  if (a === 'up' && i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+  else if (a === 'down' && i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+  else if (a === 'del') { if (!confirm('Supprimer ce filtre ? (les fiches qui l\'utilisent le gardent tant qu\'elles ne sont pas déplacées)')) return; list.splice(i, 1); if (!list.length) delete Fl[c]; }
+  homeDirty(); drawFilters($('homeBody'));
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.fl; if (!k || S.view !== 'home') return;
+  const [c, i, l] = k.split('.'), f = S.home.filters[c] && S.home.filters[c][+i]; if (!f) return;
+  const v = e.target.value.trim(); if (v) f.l[l] = v; else if (l !== 'fr') delete f.l[l]; homeDirty();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.fnew) { e.preventDefault(); const b = document.querySelector(`[data-fa="add"][data-fc="${e.target.dataset.fnew}"]`); if (b) b.click(); } });
+const DEF_YT = 'https://youtu.be/55VUcUz8cuU';
+const ytIdA = u => { const m = String(u || '').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtube-nocookie\.com\/embed\/)([\w-]{11})/); return m ? m[1] : ''; };
+function drawYt(box) {
+  const V = S.home.video = S.home.video || {}, url = V.url || '', id = ytIdA(url || DEF_YT);
+  box.innerHTML = `<div class="card-sec"><h5>Vidéo YouTube de la page d'accueil</h5>
+   <p class="hint">Une section « La Moldavie en mouvement » avec ta vidéo. Elle ne se charge qu'au clic : le site reste rapide.</p>
+   <div class="checks" style="margin-bottom:12px"><label><input type="checkbox" data-yt="on" ${V.on !== false ? 'checked' : ''}> Afficher la section vidéo</label></div>
+   <label class="f"><span>Adresse YouTube</span><input data-yt="url" type="url" placeholder="${DEF_YT} (par défaut)" value="${esc(url)}"><em>Colle un lien youtu.be/… ou youtube.com/watch?v=…</em></label>
+   <img class="prev" id="ytPrev" alt="" ${id ? `src="https://i.ytimg.com/vi/${id}/hqdefault.jpg"` : ''}></div>
+  <div class="card-sec"><h5>Titre et texte (facultatifs)</h5><p class="hint">Vide = textes par défaut du site.</p>
+   <div class="langs" data-yl>${LG.map((l, i) => `<button type="button" data-l="${l}" class="${i ? '' : 'on'}">${l.toUpperCase()}</button>`).join('')}</div>
+   ${LG.map((l, i) => `<div class="lp ${i ? '' : 'on'}" data-yp="${l}"><label class="f"><span>Titre (${esc(LGN[l] || l)})</span><input data-yt="title.${l}" value="${esc((V.title || {})[l] || '')}"></label><label class="f"><span>Texte sous la vidéo (${esc(LGN[l] || l)})</span><textarea data-yt="text.${l}" rows="3">${esc((V.text || {})[l] || '')}</textarea></label></div>`).join('')}</div>`;
+}
+function ytInput(e) {
+  if (S.view !== 'home' || S.homeTab !== 'yt') return;
+  const t = e.target, k = t.dataset && t.dataset.yt; if (!k) return;
+  const V = S.home.video = S.home.video || {};
+  if (t.type === 'checkbox') V[k] = t.checked;
+  else if (k === 'url') { const v = t.value.trim(); if (v) V.url = v; else delete V.url; const id = ytIdA(v || DEF_YT), p = $('ytPrev'); if (p) p.src = id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : ''; }
+  else { const [f, l] = k.split('.'); V[f] = V[f] || {}; if (t.value.trim()) V[f][l] = t.value.trim(); else delete V[f][l]; if (!Object.keys(V[f]).length) delete V[f]; }
+  homeDirty();
+}
+document.addEventListener('input', ytInput); document.addEventListener('change', ytInput);
+document.addEventListener('click', e => {
+  const lb = S.view === 'home' && e.target.closest('[data-yl] [data-l]');
+  if (lb) { lb.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === lb)); document.querySelectorAll('[data-yp]').forEach(p => p.classList.toggle('on', p.dataset.yp === lb.dataset.l)); }
+});
 function drawHomeBody() {
   const box = $('homeBody'); if (!box) return;
   if (S.homeTab === 'look') return drawLook(box);
@@ -560,6 +655,8 @@ function drawHomeBody() {
   if (S.homeTab === 'texts') return drawTexts(box);
   if (S.homeTab === 'gallery') return drawGallery(box);
   if (S.homeTab === 'cards') return drawCards(box);
+  if (S.homeTab === 'yt') return drawYt(box);
+  if (S.homeTab === 'filters') return drawFilters(box);
   drawVideo(box);
 }
 /* --- galerie --- */
@@ -788,7 +885,7 @@ document.addEventListener('click', e => {
 });
 
 /* --- sections & ordre --- */
-const SECS = [{ id: 'intro', i: '✍️', l: "Phrase d'introduction", d: "La phrase qui s'allume mot par mot" }, { id: 'stack', i: '🃏', l: 'Cartes « Par où commencer »', d: "Les cartes qui s'empilent" }, { id: 'gallery', i: '🖼', l: 'Galerie « Un pays en images »', d: 'Le carrousel de photos' }, { id: 'globe', i: '🌍', l: 'Globe 3D', d: 'La planète avec la frontière de la Moldavie' }, { id: 'catalogue', i: '📚', l: 'Catalogue', d: 'Circuits, vin, histoire, carte…' }];
+const SECS = [{ id: 'intro', i: '✍️', l: "Phrase d'introduction", d: "La phrase qui s'allume mot par mot" }, { id: 'stack', i: '🃏', l: 'Cartes « Par où commencer »', d: "Les cartes qui s'empilent" }, { id: 'gallery', i: '🖼', l: 'Galerie « Un pays en images »', d: 'Le carrousel de photos' }, { id: 'video', i: '▶️', l: 'Vidéo YouTube', d: 'La vidéo « La Moldavie en mouvement »' }, { id: 'globe', i: '🌍', l: 'Globe 3D', d: 'La planète avec la frontière de la Moldavie' }, { id: 'catalogue', i: '📚', l: 'Catalogue', d: 'Circuits, vin, histoire, carte…' }];
 const CARDS = { c: 'Circuits clé en main', g: 'Vin & gastronomie', h: 'Histoire & culture', t: 'Transnistrie' };
 const secOrder = () => { const o = S.home.sections.map(s => s.id).filter(id => SECS.some(x => x.id === id)); SECS.forEach(x => { if (!o.includes(x.id)) o.push(x.id); }); return o; };
 const secOn = id => { const c = S.home.sections.find(s => s.id === id); return !c || c.on !== false; };
@@ -862,6 +959,168 @@ async function saveHome() {
     toast("Accueil enregistré — visible sur le site dans quelques secondes"); drawHome();
   } catch (e) { toast(e.message, 'err'); if (b) { b.disabled = false; b.textContent = "Enregistrer l'accueil"; } }
 }
+
+/* ---------------------------------------------------------------- langues + traduction automatique */
+const BUILTIN = ['fr', 'en', 'es', 'ro', 'ru'];
+const COMMON_LANGS = [['de', 'Deutsch'], ['it', 'Italiano'], ['pt', 'Português'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['uk', 'Українська'], ['tr', 'Türkçe'], ['ar', 'العربية'], ['zh', '中文'], ['ja', '日本語'], ['ko', '한국어'], ['bg', 'Български'], ['cs', 'Čeština'], ['el', 'Ελληνικά'], ['hu', 'Magyar'], ['sv', 'Svenska'], ['da', 'Dansk'], ['fi', 'Suomi'], ['no', 'Norsk'], ['he', 'עברית'], ['sr', 'Српски'], ['hr', 'Hrvatski'], ['sk', 'Slovenčina'], ['lt', 'Lietuvių'], ['lv', 'Latviešu'], ['et', 'Eesti'], ['sq', 'Shqip'], ['hi', 'हिन्दी']];
+S.langs = { list: [], ui: {} }; S.tr = { running: false, stop: false, code: '', msg: {}, prog: {} }; S.scan = null;
+const langName = c => LGN[c] || (S.langs.list.find(l => l.code === c) || {}).name || c;
+async function loadLangs() {
+  const d = await call('langs'); S.langs = { list: d.list || [], ui: d.ui || {} };
+  S.langs.list.forEach(l => { if (!LG.includes(l.code)) LG.push(l.code); LGN[l.code] = l.name; });
+  for (let i = LG.length - 1; i >= 0; i--) if (!BUILTIN.includes(LG[i]) && !S.langs.list.some(l => l.code === LG[i])) { delete LGN[LG[i]]; LG.splice(i, 1); }
+}
+async function saveLangList(list) { const d = await call('langs', { method: 'PUT', body: JSON.stringify({ list }) }); S.langs.list = d.list; await loadLangs(); }
+function getUiSource() {
+  return new Promise(res => {
+    const f = document.createElement('iframe'); f.src = './index.html'; f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    f.style.cssText = 'position:fixed;left:-9999px;top:0;width:1280px;height:900px;border:0;opacity:0;pointer-events:none';
+    document.body.append(f); let n = 0;
+    const t = setInterval(() => {
+      n++;
+      try { const m = f.contentWindow.__md; if (m && typeof m.uiSource === 'function') { const o = m.uiSource(); if (Object.keys(o).some(k => k.startsWith('FX.'))) { clearInterval(t); f.remove(); res(o); return; } } } catch {}
+      if (n > 60) { clearInterval(t); f.remove(); res({}); }
+    }, 500);
+  });
+}
+async function loadScan(force) {
+  if (S.scan && !force) return S.scan;
+  const cols = Object.keys(COLS);
+  const [src, home, ...docs] = await Promise.all([getUiSource(), call('settings/home'), ...cols.map(c => call(c))]);
+  S.scan = { src, home, docs: Object.fromEntries(cols.map((c, i) => [c, docs[i]])) };
+  return S.scan;
+}
+function buildUnits(code, data) {
+  const units = [], parts = { ui: [0, 0], home: [0, 0], docs: [0, 0] }; let total = 0, done = 0;
+  const add = (part, text, have, unit) => {
+    if (typeof text !== 'string' || !/\p{L}/u.test(text)) return;
+    parts[part][1]++; total++;
+    if (have && String(have).trim()) { parts[part][0]++; done++; } else units.push({ part, text, ...unit });
+  };
+  if (!BUILTIN.includes(code)) { const have = S.langs.ui[code] || {}; Object.entries(data.src || {}).forEach(([k, v]) => add('ui', v, have[k], { kind: 'ui', key: k })); }
+  const H = data.home || {};
+  Object.entries(H.cards || {}).forEach(([k, c]) => ['title', 'text'].forEach(f => c[f] && add('home', c[f].fr, c[f][code], { kind: 'home', path: ['cards', k, f] })));
+  (H.gallery || []).forEach((g, i) => g.caption && add('home', g.caption.fr, g.caption[code], { kind: 'home', path: ['gallery', i, 'caption'] }));
+  ['title', 'text'].forEach(f => H.video && H.video[f] && add('home', H.video[f].fr, H.video[f][code], { kind: 'home', path: ['video', f] }));
+  Object.entries(H.filters || {}).forEach(([c, list]) => list.forEach((f, i) => add('home', f.l && f.l.fr, f.l && f.l[code], { kind: 'home', path: ['filters', c, i, 'l'] })));
+  Object.entries(data.docs || {}).forEach(([col, list]) => list.forEach(d => {
+    ['title', 'summary', 'body', 'when'].forEach(f => { if (d[f] && typeof d[f] === 'object') add('docs', d[f].fr, d[f][code], { kind: 'doc', col, id: d._id, path: [f] }); });
+    (d.itinerary || []).forEach((it, i) => ['title', 'text'].forEach(f => it && it[f] && add('docs', it[f].fr, it[f][code], { kind: 'doc', col, id: d._id, path: ['itinerary', i, f] })));
+  }));
+  return { units, total, done, parts };
+}
+const pct = b => b && b.total ? Math.floor(100 * b.done / b.total) : 0;
+function takeBatch(units, max) {
+  const first = units[0], out = []; let chars = 0;
+  while (units.length && out.length < max && units[0].part === first.part && (!out.length || chars + units[0].text.length < 3500)) { const u = units.shift(); chars += u.text.length; out.push(u); }
+  return out;
+}
+async function saveBatch(code, batch, out, data) {
+  const kind = batch[0].kind;
+  if (kind === 'ui') {
+    const map = {}; batch.forEach((u, i) => { map[u.key] = out[i]; });
+    await call('lang/ui/' + code, { method: 'PUT', body: JSON.stringify({ map }) });
+    S.langs.ui[code] = Object.assign(S.langs.ui[code] || {}, map);
+  } else if (kind === 'home') {
+    batch.forEach((u, i) => { let o = data.home; for (const p of u.path) o = o[p]; o[code] = out[i]; });
+    await call('settings/home', { method: 'PUT', body: JSON.stringify(data.home) });
+  } else {
+    const touched = {};
+    batch.forEach((u, i) => {
+      const d = data.docs[u.col].find(x => x._id === u.id); let o = d; for (const p of u.path) o = o[p]; o[code] = out[i];
+      (touched[u.col + '/' + u.id] = touched[u.col + '/' + u.id] || { d, keys: new Set() }).keys.add(u.path[0]);
+    });
+    for (const [path, t] of Object.entries(touched)) { const body = {}; t.keys.forEach(k => { body[k] = t.d[k]; }); await call(path, { method: 'PUT', body: JSON.stringify(body) }); }
+  }
+}
+function drawBars() {
+  document.querySelectorAll('.lcard').forEach(card => {
+    const c = card.dataset.code, b = S.tr.prog[c]; if (!b) return;
+    const p = pct(b);
+    card.querySelector('.pbar i').style.width = p + '%';
+    card.querySelector('.pinfo').innerHTML = `<b>${p} %</b> · ${b.done} / ${b.total} textes` + [['ui', 'Interface'], ['home', 'Accueil'], ['docs', 'Fiches']].filter(([k]) => b.parts[k][1]).map(([k, l]) => ` · ${l} ${b.parts[k][1] ? Math.floor(100 * b.parts[k][0] / b.parts[k][1]) : 100} %`).join('');
+  });
+}
+async function scanProgress(code) { const data = await loadScan(false); S.tr.prog[code] = buildUnits(code, data); drawBars(); }
+async function runTr(code) {
+  if (S.tr.running) return;
+  if (S.dirty) { toast("Enregistre d'abord les modifications en cours de l'accueil.", 'err'); return; }
+  S.tr.running = true; S.tr.stop = false; S.tr.code = code; S.tr.msg[code] = ''; drawLangs();
+  try {
+    const data = await loadScan(true), b = S.tr.prog[code] = buildUnits(code, data), batchMax = (S.trInfo && S.trInfo.batch) || 6;
+    if (!BUILTIN.includes(code) && !Object.keys(data.src || {}).length) toast("Les textes de l'interface n'ont pas pu être lus : seuls l'accueil et les fiches seront traduits.", 'err');
+    while (!S.tr.stop && b.units.length) {
+      const batch = takeBatch(b.units, batchMax);
+      let r;
+      try { r = await call('translate', { method: 'POST', body: JSON.stringify({ to: code, name: langName(code), strings: batch.map(u => u.text) }) }); }
+      catch (e) { if (e.quota) { b.units.unshift(...batch); S.tr.msg[code] = 'quota'; break; } throw e; }
+      await saveBatch(code, batch, r.out, data);
+      b.done += batch.length; batch.forEach(u => { b.parts[u.part][0]++; }); drawBars();
+    }
+    if (!S.tr.msg[code]) S.tr.msg[code] = b.units.length ? 'stop' : 'done';
+  } catch (e) { S.tr.msg[code] = 'err:' + e.message; toast(e.message, 'err'); }
+  S.tr.running = false; S.home = null; S.scan = null;
+  if (S.view === 'langs') { drawLangs(); drawBars(); }
+  if (S.tr.msg[code] === 'quota' && S.autoRetry) setTimeout(() => { if (!S.tr.running) runTr(code); }, 30 * 60 * 1000);
+}
+function trNote() {
+  const p = S.trInfo && S.trInfo.provider;
+  if (p === 'claude') return '🤖 Traducteur : <b>Claude</b> (clé détectée) — traduction de haute qualité ; les « tokens » de ton compte servent de limite.';
+  if (p === 'deepl') return '🔤 Traducteur : <b>DeepL</b> (clé détectée) — limite mensuelle de caractères.';
+  if (p === 'mymemory') return '🆓 Traducteur : <b>MyMemory</b> (gratuit, sans clé) — limite quotidienne de caractères. Pour traduire plus vite et mieux, ajoute <code>ANTHROPIC_API_KEY</code> (Claude) ou <code>DEEPL_API_KEY</code> dans les variables d\'environnement de Render, puis redéploie.';
+  return '⚠ Le serveur ne répond pas à la traduction : remets le nouveau <b>server.js</b> dans ton dépôt (Render redéploie seul).';
+}
+const MSGS = { quota: '⏸ Limite du service atteinte : la progression est <b>sauvegardée</b>. Relance plus tard : la traduction reprend exactement là où elle s\'est arrêtée.', done: '✔ Traduction terminée.', stop: '⏹ Arrêtée : la progression est sauvegardée, tu peux reprendre quand tu veux.' };
+function drawLangs() {
+  const all = [...BUILTIN.filter(c => c !== 'fr').map(c => ({ code: c, name: LGN[c] || c, builtin: true, on: true })), ...S.langs.list];
+  $('content').innerHTML = `<div class="card-sec"><p class="hint" style="margin:0">${trNote()}</p>
+   <div class="checks" style="margin-top:12px"><label><input type="checkbox" data-autor ${S.autoRetry ? 'checked' : ''}> Réessayer automatiquement toutes les 30 min quand la limite est atteinte (tant que cette page reste ouverte)</label></div></div>
+   <div class="card-sec"><h5>Ajouter une langue</h5><div class="srch"><input id="lgC" list="lgL" placeholder="Code (ex : de) ou choisis dans la liste" autocomplete="off"><input id="lgN" placeholder="Nom affiché (ex : Deutsch)"><button type="button" class="btn gold" data-la="add">＋ Ajouter</button></div>
+   <datalist id="lgL">${COMMON_LANGS.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join('')}</datalist><p class="hint" style="margin:8px 0 0">Une fois ajoutée, clique sur « Traduire » : l'interface du site, la page d'accueil et toutes les fiches sont traduites depuis le français.</p></div>
+   <div class="lgrid">${all.map(l => {
+     const b = S.tr.prog[l.code], p = pct(b), run = S.tr.running && S.tr.code === l.code, m = S.tr.msg[l.code] || '';
+     return `<div class="lcard" data-code="${esc(l.code)}"><div class="lh"><div><b class="ln">${esc(l.name)}</b> <span class="pill ${l.builtin ? 'dra' : 'pub'}" style="margin-left:6px">${esc(l.code.toUpperCase())}</span> <small>${l.builtin ? 'intégrée' : 'ajoutée'}</small></div>
+      ${l.builtin ? '' : `<label class="sw"><input type="checkbox" data-lv="${esc(l.code)}" ${l.on !== false ? 'checked' : ''}><span>Visible sur le site</span></label>`}</div>
+      <div class="pbar"><i style="width:${p}%"></i></div><div class="pinfo">${b ? '' : 'Calcul de la progression…'}</div>
+      ${m ? `<div class="lmsg ${m.startsWith('err') ? 'bad' : ''}">${m.startsWith('err:') ? '⚠ ' + esc(m.slice(4)) : MSGS[m]}</div>` : ''}
+      <div class="tools" style="margin:12px 0 0">${run ? '<button type="button" class="btn bad" data-la="stop">⏹ Arrêter</button><span class="spin">Traduction en cours…</span>' : `<button type="button" class="btn pri" data-la="run" ${S.tr.running ? 'disabled' : ''}>🌐 Traduire</button><button type="button" class="btn" data-la="rescan" ${S.tr.running ? 'disabled' : ''}>↻ Recalculer</button>${l.builtin ? '' : `<button type="button" class="btn bad" data-la="del" ${S.tr.running ? 'disabled' : ''}>Supprimer</button>`}`}</div></div>`;
+   }).join('')}</div>`;
+  drawBars();
+}
+async function showLangs() {
+  $('topbar').innerHTML = `<h2>🌍 Langues<small>Ajoute des langues et traduis-les automatiquement. Si la limite du service est atteinte, la progression est sauvegardée et reprend ensuite là où elle s'est arrêtée.</small></h2>`;
+  $('content').innerHTML = '<div class="skeleton"></div>';
+  try { await loadLangs(); } catch (e) { $('content').innerHTML = `<div class="empty"><b>Impossible de charger</b>${esc(e.message)}</div>`; return; }
+  try { S.trInfo = await call('translate/info'); } catch { S.trInfo = null; }
+  drawLangs();
+  if (!S.tr.running) for (const l of [...BUILTIN.filter(c => c !== 'fr'), ...S.langs.list.map(x => x.code)]) { try { await scanProgress(l); } catch (e) { break; } if (S.view !== 'langs') return; }
+}
+document.addEventListener('click', async e => {
+  if (S.view !== 'langs') return;
+  const b = e.target.closest('[data-la]'); if (!b) return;
+  const act = b.dataset.la, card = b.closest('.lcard'), code = card && card.dataset.code;
+  if (act === 'run') return runTr(code);
+  if (act === 'stop') { S.tr.stop = true; return; }
+  if (act === 'rescan') { S.scan = null; delete S.tr.prog[code]; drawLangs(); try { await scanProgress(code); } catch (er) { toast(er.message, 'err'); } return; }
+  if (act === 'add') {
+    const c = $('lgC').value.trim().toLowerCase(), known = COMMON_LANGS.find(x => x[0] === c), n = $('lgN').value.trim() || (known && known[1]) || c;
+    if (!/^[a-z]{2,3}(-[a-z0-9]{2,4})?$/i.test(c)) { toast('Code de langue invalide (ex : de, it, pt, zh).', 'err'); return; }
+    if (BUILTIN.includes(c) || S.langs.list.some(l => l.code === c)) { toast('Cette langue existe déjà.', 'err'); return; }
+    try { await saveLangList([...S.langs.list, { code: c, name: n, on: true }]); toast('Langue « ' + n + ' » ajoutée'); drawLangs(); scanProgress(c).catch(() => {}); } catch (er) { toast(er.message, 'err'); }
+    return;
+  }
+  if (act === 'del') {
+    if (!confirm('Supprimer cette langue du site ? Les traductions de l\'interface seront effacées (celles des fiches restent enregistrées).')) return;
+    try { await saveLangList(S.langs.list.filter(l => l.code !== code)); delete S.tr.prog[code]; toast('Langue supprimée'); drawLangs(); } catch (er) { toast(er.message, 'err'); }
+  }
+});
+document.addEventListener('change', async e => {
+  if (S.view !== 'langs') return;
+  if (e.target.dataset && e.target.dataset.autor !== undefined) { S.autoRetry = e.target.checked; return; }
+  const v = e.target.dataset && e.target.dataset.lv; if (!v) return;
+  try { await saveLangList(S.langs.list.map(l => l.code === v ? { ...l, on: e.target.checked } : l)); toast(e.target.checked ? 'Langue visible sur le site' : 'Langue masquée du site'); } catch (er) { toast(er.message, 'err'); e.target.checked = !e.target.checked; }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && S.view === 'langs' && (e.target.id === 'lgC' || e.target.id === 'lgN')) { e.preventDefault(); const b = document.querySelector('[data-la="add"]'); if (b) b.click(); } });
 
 /* ---------------------------------------------------------------- propositions automatiques */
 async function showCands() {
