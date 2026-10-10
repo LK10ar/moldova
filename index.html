@@ -420,6 +420,7 @@ html.lightmode #pgbg{display:none}
 .vid-cap:empty{display:none}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<script src="config.js"></script>
 </head><body class="on-hero"><div id="pgbg" aria-hidden="true"></div>
 <header><div class="bar">
 <a class="logo" href="./">Moldova Explorer</a>
@@ -519,7 +520,7 @@ html.lightmode #pgbg{display:none}
 <div id="lb" class="lb" hidden><button class="lbn" data-d="-1" style="left:10px">‹</button><img alt=""><button class="lbn" data-d="1" style="right:10px">›</button></div>
 <script>
 (()=>{
-const API='https://back-moldova.onrender.com';
+const API=window.MD_API||'https://back-moldova-xjyz.onrender.com';
 const LG=['fr','en','es','ro','ru'];
 const $=id=>document.getElementById(id);
 const ls={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
@@ -776,20 +777,21 @@ async function loadApi(silent){
  const fresh=[];let failed=0;
  await Promise.all(Object.entries(cols).map(async([col,cat])=>{
   try{
-   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),12000);
+   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),silent?20000:45000);
    const r=await fetch(`${API}/api/${col}`,{signal:ctl.signal,cache:'no-store'});clearTimeout(to);
    if(!r.ok){failed++;return}
    (await r.json()).forEach(x=>fresh.push(fromApi((x.tags||[]).includes('event')?'e':(x.wilaya||'').toLowerCase()==='transnistrie'?'t':cat,x)));
   }catch{failed++}
  }));
- if(silent&&failed)return;                       // réseau instable : on garde l'affichage actuel
+ if(silent&&failed)return false;                       // réseau instable : on garde l'affichage actuel
  const sig=a=>a.filter(i=>i.api).map(i=>i.id+':'+(i.upd||'')).sort().join('|'),prev=sig(ITEMS);
  ITEMS.splice(0,ITEMS.length,...ITEMS.filter(i=>!i.api),...fresh);
  // les fiches importées dans la base remplacent celles codées en dur
  if(ITEMS.some(i=>i.api&&i.seeded))ITEMS.splice(0,ITEMS.length,...ITEMS.filter(i=>i.api));
- if(silent&&prev===sig(ITEMS))return;
+ if(silent&&prev===sig(ITEMS))return true;
  const typing=document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
  if($('modal').hidden&&!(silent&&typing))render();else window.mdFX&&window.mdFX.update();
+ return !failed;
 }
 
 /* ---------- Rendu de la page ---------- */
@@ -1049,7 +1051,9 @@ window.addEventListener('resize',()=>{if(innerWidth>1360)closeNav()});
 
 render();
 cover({id:'hero',w:"Orheiul Vechi",n:{fr:'Orheiul Vechi'}},1920).then(u=>{if(u&&!window.__heroImg)document.querySelector('.hero').style.setProperty('--hero',`url("${u}")`)});
-loadApi();refreshLangs();
+let apiOk=false;
+loadApi().then(ok=>{apiOk=!!ok;if(!apiOk)[6000,15000,30000,60000,120000].forEach(ms=>setTimeout(()=>{if(!apiOk){loadApi(true).then(r=>{if(r)apiOk=true});refreshLangs()}},ms))});   // le serveur gratuit met jusqu'à 1 min à se réveiller
+refreshLangs();
 window.__md={ITEMS,cover,tx,byId,T,API,loadApi,uiSource,refreshLangs,lang:()=>lang,
  setFilters:f=>{const n=JSON.stringify(f||{});if(n===JSON.stringify(FILTERS))return;FILTERS=f||{};Object.keys(FLAB).forEach(k=>delete FLAB[k]);Object.values(FILTERS).forEach(a=>a.forEach(x=>{FLAB[x.k]=x.l}));if($('modal').hidden&&CATS[tab]!=='m')render()}};
 })();
@@ -1400,7 +1404,7 @@ async function pollLive(){
       if(r.status===404||r.status===500){verOff=true}
       else if(r.ok){
         const v=await r.json();
-        if(lastVer===null){lastVer=v;return}
+        if(lastVer===null){lastVer=v;if(!md().ITEMS.some(i=>i.api))await md().loadApi(true);return}
         const itemsChanged=v.items!==lastVer.items,homeChanged=v.home!==lastVer.home,langsChanged=v.langs!==lastVer.langs;
         lastVer=v;
         if(itemsChanged)await md().loadApi(true);
@@ -1415,7 +1419,9 @@ async function pollLive(){
 }
 function startLive(){
   pollLive();
-  setInterval(()=>{if(!document.hidden)pollLive()},25000);
+  let lastAct=Date.now();const IDLE=10*60*1000;
+  ['pointermove','keydown','scroll','touchstart','click'].forEach(ev=>addEventListener(ev,()=>{const was=Date.now()-lastAct>IDLE;lastAct=Date.now();if(was)pollLive()},{passive:true}));
+  setInterval(()=>{if(!document.hidden&&Date.now()-lastAct<IDLE)pollLive()},25000);   // inactif depuis 10 min : on laisse le serveur gratuit s'endormir
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollLive()});
 }
 const ytId=u=>{const m=String(u||'').match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtube-nocookie\.com\/embed\/)([\w-]{11})/);return m?m[1]:''};
