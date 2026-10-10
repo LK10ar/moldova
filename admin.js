@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const API = 'https://back-moldova-xjyz.onrender.com'; // URL de l'API Render, sans / final
+const API = window.MD_API || 'https://back-moldova-xjyz.onrender.com'; // URL de l'API Render : modifiable dans config.js
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slugify = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
